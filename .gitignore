@@ -1,0 +1,12 @@
+# environment variable files
+.env
+.env.*
+
+# IDE settings
+.vscode
+
+# Local example files for testing use cases
+examples
+
+# Compiled py files
+*.pyc

@@ -1,0 +1,9 @@
+[project]
+name = "glimpse"
+version = "0.1.0"
+description = "Function-level logging and tracing library."
+authors = [{ name="Priyansh Patel", email="pxpatel04@gmail.com" }]
+dependencies = []
+
+[project.scripts]
+glimpse = "glimpse.cli:main"
