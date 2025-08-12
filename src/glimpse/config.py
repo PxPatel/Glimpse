@@ -34,6 +34,9 @@ class Config:
         if env_override:
             self._load_from_env()
 
+        if not self._dest or self._dest not in self._ACCEPTABLE_DEST:
+            raise ValueError(f"Invalid destination: '{self._dest}'")
+
     def _load_from_env(self):
         # Core config overrides
         self._dest = os.getenv(self.build_env_var("DEST"), self._dest)

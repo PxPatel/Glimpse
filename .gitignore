@@ -9,6 +9,7 @@
 examples
 
 # Compiled py files
+__pycache__
 *.pyc
 
 # Weird egg-info files

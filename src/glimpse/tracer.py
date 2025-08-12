@@ -14,7 +14,7 @@ class Tracer:
     
     def __init__(self, config: Config, writer_initiation = True, policy: TracingPolicy = None):
         self._config = config
-        self.policy = policy
+        self._policy = policy
         self._writer = LogWriter(config, writer_initiation)
 
         # Capture where tracer was initialized
@@ -117,6 +117,7 @@ class Tracer:
                 )
 
                 self._writer.write(end_log_entry)
+                return result
 
             except Exception as e:
                 exception = str(e)
@@ -202,7 +203,7 @@ class Tracer:
     def _handle_function_call(self, frame):
         """Handle a function call event."""
         # Check trace depth limit
-        if len(self._call_stack) >= self._policy.trace_depth:
+        if len(self._call_metadata) >= self._policy.trace_depth:
             return None
             
         # Get function info
@@ -243,7 +244,7 @@ class Tracer:
 
     def _handle_function_return(self, frame, return_value):
         """Handle a function return event."""
-        if not self._call_stack:
+        if not self._call_metadata:
             return self._trace_calls
         
         call_info = self._call_metadata.pop(frame, None)
@@ -255,7 +256,7 @@ class Tracer:
 
     def _handle_function_exception(self, frame, exc_info):
         """Handle a function exception event."""
-        if not self._call_stack:
+        if not self._call_metadata:
             return self._trace_calls
 
         call_info = self._call_metadata.pop(frame, None)
