@@ -10,3 +10,9 @@ examples
 
 # Compiled py files
 *.pyc
+
+# Weird egg-info files
+glimpse.egg-info
+
+# Glimpse policy files
+*-policy.json
