@@ -1,18 +1,68 @@
-import inspect
 import sys
-from functools import wraps
-from typing import Optional
-from src.glimpse.config import Config
-from src.glimpse.logwriter import LogWriter
-from src.glimpse.logentry import LogEntry
-from datetime import datetime
+import inspect
 import pprint
+from pathlib import Path
+from typing import Optional
+from functools import wraps
+from datetime import datetime
+from .config import Config 
+from .policy.policy import TracingPolicy
+from .writers.logentry import LogEntry
+from .writers.logwriter import LogWriter
 
 class Tracer:
     
-    def __init__(self, config: Config, writer_initiation = True):
+    def __init__(self, config: Config, writer_initiation = True, policy: TracingPolicy = None):
         self._config = config
+        self.policy = policy
         self._writer = LogWriter(config, writer_initiation)
+
+        # Capture where tracer was initialized
+        caller_frame = inspect.currentframe().f_back
+        self._init_file = Path(caller_frame.f_code.co_filename).resolve()
+        self._init_module_name = self._get_module_name_from_file(self._init_file)
+
+        # Think about logging an entry at initialization for record of instance
+
+    def _get_module_name_from_file(self, file_path: Path) -> Optional[str]:
+        """
+        Convert a file path to its Python module name.
+        Returns None if it can't be determined.
+        """
+        try:
+            # Handle common cases
+            if file_path.name == '__main__.py':
+                # For files run as modules (python -m package)
+                return '__main__'
+            
+            if file_path.suffix == '.py':
+                # For regular .py files, use the filename without extension
+                return file_path.stem
+            
+            return None
+        except Exception:
+            return None
+
+    def should_trace_function(self, func) -> bool:
+        """
+        Determine if a function should be traced based on tracing policy.
+        
+        Args:
+            func: The function to check
+            
+        Returns:
+            True if function should be traced, False otherwise
+        """
+        if not hasattr(func, '__module__'):
+            return False
+        
+        module_name = func.__module__
+        
+        if self._init_module_name and module_name == self._init_module_name:
+            return True
+        
+        # Check if it's an explicitly included external package or internal subpackage 
+        return self._policy.should_trace_package(module_name)
 
     @staticmethod
     def get_function_arguments(func, *args, **kwargs):
@@ -25,7 +75,6 @@ class Tracer:
             call_parts.append(f"{name}={value!r}")
         call_str = f"{func.__name__}({', '.join(call_parts)})"
         return call_str
-
 
     def trace_function(self, func):
         @wraps(func)
@@ -127,9 +176,6 @@ class Tracer:
 
         return wrapper
     
-    # Call multi-trace for every function call automatically
-    # Need to inspect call stack
-
     def _truncate(self, value: str) -> str:
         max_len = self._config.max_field_length
         if len(value) > max_len:

@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 from typing import Any, TextIO
-from src.glimpse.config import Config
-from src.glimpse.writers.base import BaseWriter
+from ..config import Config
+from .base import BaseWriter
 
 
 class JSONWriter(BaseWriter):

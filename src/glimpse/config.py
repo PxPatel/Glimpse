@@ -29,6 +29,7 @@ class Config:
         self._level = level.upper()
         self._enable_trace_id = enable_trace_id
         self._params = params or {}
+        self._max_field_length = max_field_length
 
         if env_override:
             self._load_from_env()

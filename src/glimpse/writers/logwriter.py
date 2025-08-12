@@ -1,6 +1,6 @@
-from src.glimpse.config import Config
-from src.glimpse.logentry import LogEntry
-from src.glimpse.writers.json import JSONWriter
+from ..config import Config
+from .logentry import LogEntry
+from .json import JSONWriter
 
 class LogWriter:
 
