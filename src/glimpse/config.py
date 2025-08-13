@@ -24,7 +24,7 @@ class Config:
 
         self._dest = []
         if isinstance(dest, list):
-            self._dest = [candidate for candidate in dest if dest in self._ACCEPTABLE_DEST]
+            self._dest = [candidate.strip() for candidate in dest if candidate.strip() in self._ACCEPTABLE_DEST]
         elif isinstance(dest, str):
             self._dest = [dest] if dest in self._ACCEPTABLE_DEST else None
                 
@@ -42,14 +42,16 @@ class Config:
     def _load_from_env(self):
         # Core config overrides
         dest_str = os.getenv(self.build_env_var("DEST"), None)
-        if dest_str:
-            self._dest = [x for x in dest_str.split(",") if x in self._ACCEPTABLE_DEST]
+        if dest_str and dest_str.strip():
+            self._dest = [x.strip() for x in dest_str.split(",") if x.strip() in self._ACCEPTABLE_DEST]
+        elif dest_str is not None and not dest_str.strip():
+            self._dest = ''
 
         self._level = os.getenv(self.build_env_var("LEVEL"), self._level).upper()
 
-        self._enable_trace_id = os.getenv(self.build_env_var("TRACE_ID"), None)
-        if self._enable_trace_id is not None:
-            self._enable_trace_id = self._enable_trace_id.lower() in {"1", "true", "yes"}
+        trace_id_val = os.getenv(self.build_env_var("TRACE_ID"), None)
+        if trace_id_val is not None:
+            self._enable_trace_id = trace_id_val.lower() in {"1", "true", "yes"}
 
         # Load destination-specific parameters
         for key, val in os.environ.items():
