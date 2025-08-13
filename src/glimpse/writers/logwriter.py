@@ -9,17 +9,18 @@ class LogWriter:
 
     def __init__(self, config: Config, writer_initiation = True):
         self._config = config
-        self._backend_type = config.dest
         self._initialized = writer_initiation
-        self._writer = None 
+        self._writers = []
         if writer_initiation:
-            self._writer = self._initialize_backend()
+            self.initalize_writers()
 
-    def _initialize_backend(self):
-        if self._writer:
-            raise RuntimeError("Backend writer is already initialized.")
+    def initalize_writers(self):
+        for dest in self._config._dest:
+            self._writers.append(self._initialize_destination(dest))
 
+    def _initialize_destination(self, dest):
         dest = self._config.dest.lower()
+
         if dest == "sqllite":
             return SQLiteWriter(self._config)
         elif dest == "jsonl" or dest == "json":
@@ -29,20 +30,42 @@ class LogWriter:
             # return MongoWriter(self._config)
         else:
             raise ValueError(f"Unsupported log destination: {dest}")
-    
+
     def write(self, entry: LogEntry):
-        self._writer.write(entry)
+        for writer in self._writers:
+            writer.write(entry)
 
     def flush(self):
-        if hasattr(self._writer, "flush"):
-            self._writer.flush()
+        for writer in self._writers:
+            if hasattr(writer, "flush"):
+                writer.flush()
 
     def close(self):
-        if hasattr(self._writer, "close"):
-            self._writer.close()
+        for writer in self._writers:
+            if hasattr(writer, "close"):
+                writer.close()
+
+    def add_destination(self, dest: str):
+        if not isinstance(dest, str) or dest is None:
+            raise ValueError(f"'dest' must be a non-empty string")
+        
+        success = self._config.add_destination(dest)
+        if success:
+            self._writers.append(self._initialize_destination(dest))
+
+    def remove_destination(self, idx: int):
+        if not isinstance(idx, int) or idx < 0:
+            raise ValueError(f"'idx' must be be a positive integer")
+        if idx >= len(self._writers):
+            raise IndexError(f"'idx' must be within a valid index in the _writers array")
+
+        success = self._config.remove_destination(idx)
+        if success:
+            self._writers.pop(idx)
+            
 
     @property
-    def backend_name(self):
-        return self._backend_type
+    def get_destinations(self):
+        return self._config.dest.copy()
 
 

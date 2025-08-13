@@ -12,7 +12,7 @@ class Config:
 
     def __init__(
         self,
-        dest: str = "jsonl",
+        dest: str | list[str] = "jsonl",
         level: str = "INFO",
         enable_trace_id: bool = False,
         params: Optional[Dict[str, str]] = None,
@@ -22,10 +22,12 @@ class Config:
     ):
         self._env_prefix = env_prefix.upper()
 
-        if dest not in self._ACCEPTABLE_DEST:
-            raise ValueError(f"Invalid destination '{dest}'. Must be one of {self._ACCEPTABLE_DEST}")
-        self._dest = dest
-
+        self._dest = []
+        if isinstance(dest, list):
+            self._dest = [candidate for candidate in dest if dest in self._ACCEPTABLE_DEST]
+        elif isinstance(dest, str):
+            self._dest = [dest] if dest in self._ACCEPTABLE_DEST else None
+                
         self._level = level.upper()
         self._enable_trace_id = enable_trace_id
         self._params = params or {}
@@ -34,17 +36,20 @@ class Config:
         if env_override:
             self._load_from_env()
 
-        if not self._dest or self._dest not in self._ACCEPTABLE_DEST:
+        if not self._dest:
             raise ValueError(f"Invalid destination: '{self._dest}'")
 
     def _load_from_env(self):
         # Core config overrides
-        self._dest = os.getenv(self.build_env_var("DEST"), self._dest)
+        dest_str = os.getenv(self.build_env_var("DEST"), None)
+        if dest_str:
+            self._dest = [x for x in dest_str.split(",") if x in self._ACCEPTABLE_DEST]
+
         self._level = os.getenv(self.build_env_var("LEVEL"), self._level).upper()
 
-        trace_id_val = os.getenv(self.build_env_var("TRACE_ID"))
-        if trace_id_val is not None:
-            self._enable_trace_id = trace_id_val.lower() in {"1", "true", "yes"}
+        self._enable_trace_id = os.getenv(self.build_env_var("TRACE_ID"), None)
+        if self._enable_trace_id is not None:
+            self._enable_trace_id = self._enable_trace_id.lower() in {"1", "true", "yes"}
 
         # Load destination-specific parameters
         for key, val in os.environ.items():
@@ -55,6 +60,14 @@ class Config:
 
     def build_env_var(self, suffix: str):
         return f"{self._env_prefix}{suffix}"
+
+    def add_destination(self, dest: str) -> bool:
+        self._dest.append(dest)
+        return True
+
+    def remove_destination(self, idx: int) -> bool:
+        self._dest.pop(idx)
+        return True
 
     @property
     def dest(self) -> str:
