@@ -1,6 +1,7 @@
 from ..config import Config
 from .logentry import LogEntry
 from .json import JSONWriter
+from .sqlite import SQLiteWriter
 
 # Add support for multiple destinations
 
@@ -20,8 +21,7 @@ class LogWriter:
 
         dest = self._config.dest.lower()
         if dest == "sqllite":
-            pass
-            # return SQLiteWriter(self._config)
+            return SQLiteWriter(self._config)
         elif dest == "jsonl" or dest == "json":
             return JSONWriter(self._config)
         elif dest == "mongo":
