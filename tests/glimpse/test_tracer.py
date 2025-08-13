@@ -282,7 +282,7 @@ class TestTracer:
         
         assert exception_entry.stage == "EXCEPTION"
         assert exception_entry.exception == "Test error"
-        assert exception_entry.level == "ERROR"
+        assert exception_entry.level == "INFO"
 
     def test_trace_function_decorator_preserves_function_metadata(self, tracer):
         """Test that trace_function decorator preserves original function metadata."""
@@ -833,7 +833,7 @@ class TestTracer:
         
         assert isinstance(log_entry, LogEntry)
         assert log_entry.stage == "EXCEPTION"
-        assert log_entry.level == "ERROR"
+        assert log_entry.level == "INFO"
         assert log_entry.function == "test_module.test_func"
         assert "ValueError: test error" in log_entry.exception
 

@@ -9,6 +9,7 @@ from .config import Config
 from .policy.policy import TracingPolicy
 from .writers.logentry import LogEntry
 from .writers.logwriter import LogWriter
+from .common.ids import IDGenerator
 
 class Tracer:
     
@@ -16,6 +17,7 @@ class Tracer:
         self._config = config
         self._policy = policy
         self._writer = LogWriter(config, writer_initiation)
+        self._id_generator = IDGenerator()
 
         # Capture where tracer was initialized
         caller_frame = inspect.currentframe().f_back
@@ -91,7 +93,9 @@ class Tracer:
             try:
                 start_time = datetime.now()
                 start_log_entry = LogEntry(
-                    entry_id=-1,
+                    entry_id=self._id_generator.new_entry_id(),
+                    call_id=self._id_generator.new_call_id(),
+                    trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
                     level=level,
                     function=func.__qualname__,
                     args=self._truncate(call_str),
@@ -106,7 +110,9 @@ class Tracer:
                 PRECISION = 3
                 end_time = datetime.now()
                 end_log_entry = LogEntry(
-                    entry_id=-1,
+                    entry_id=self._id_generator.new_entry_id(),
+                    call_id=self._id_generator.new_call_id(),
+                    trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
                     level=level,
                     function=func.__qualname__,
                     args=self._truncate(call_str),
@@ -121,10 +127,12 @@ class Tracer:
 
             except Exception as e:
                 exception = str(e)
-                level = "ERROR"
+                level = self._config.level
 
                 error_log_entry = LogEntry(
-                    entry_id=-1,
+                    entry_id=self._id_generator.new_entry_id(),
+                    call_id=self._id_generator.new_call_id(),
+                    trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
                     level=level,
                     function=func.__qualname__,
                     args=self._truncate(call_str),
@@ -225,14 +233,18 @@ class Tracer:
         # Check if we should trace this function
         if not self.should_trace_function(mock_func):
             return None
-            
+        
+        # Generate new call_id to identify execution
+        call_id = self._id_generator.new_call_id()
+        
         # Track call in stack
         call_info = {
+            'call_id': call_id,
             'function_name': func_name,
             'module_name': module_name,
             'qualname': f"{module_name}.{func_name}" if module_name else func_name,
             'start_time': datetime.now(),
-            'frame': frame
+            'frame': frame,
         }
         
         self._call_metadata[frame] = call_info
@@ -299,7 +311,10 @@ class Tracer:
         args_str = self._get_function_args_from_frame(frame)
         
         log_entry = LogEntry(
-            entry_id=-1,
+            entry_id=self._id_generator.new_entry_id(),
+            call_id=call_info[call_info],
+            trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
+
             level=self._config.level,
             function=call_info['qualname'],
             args=self._truncate(f"{call_info['function_name']}{args_str}"),
@@ -318,7 +333,10 @@ class Tracer:
         result_str = self._truncate(pprint.pformat(return_value, indent=2, width=80))
         
         log_entry = LogEntry(
-            entry_id=-1,
+            entry_id=self._id_generator.new_entry_id(),
+            call_id=call_info[call_info],
+            trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
+
             level=self._config.level,
             function=call_info['qualname'],
             args=call_info['function_name'],
@@ -336,8 +354,11 @@ class Tracer:
         exception_str = f"{exc_type.__name__}: {exc_value}"
         
         log_entry = LogEntry(
-            entry_id=-1,
-            level="ERROR",
+            entry_id=self._id_generator.new_entry_id(),
+            call_id=call_info[call_info],
+            trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
+
+            level=self._config.level,
             function=call_info['qualname'],
             args=call_info['function_name'],
             stage="EXCEPTION",

@@ -2,6 +2,8 @@ from ..config import Config
 from .logentry import LogEntry
 from .json import JSONWriter
 
+# Add support for multiple destinations
+
 class LogWriter:
 
     def __init__(self, config: Config, writer_initiation = True):

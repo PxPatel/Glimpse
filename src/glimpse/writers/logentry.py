@@ -5,8 +5,10 @@ from typing import Optional
 @dataclass
 class LogEntry:
     entry_id: int
-    level: str
+    call_id: str
+    trace_id: str
     function: str
+    level: str
     args: str
     stage: str
     timestamp: datetime
