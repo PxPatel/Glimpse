@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Dict
+from typing import List, Optional, Dict
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -26,7 +26,7 @@ class Config:
         if isinstance(dest, list):
             self._dest = [candidate.strip() for candidate in dest if candidate.strip() in self._ACCEPTABLE_DEST]
         elif isinstance(dest, str):
-            self._dest = [dest] if dest in self._ACCEPTABLE_DEST else None
+            self._dest = [dest] if dest in self._ACCEPTABLE_DEST else []
                 
         self._level = level.upper()
         self._enable_trace_id = enable_trace_id
@@ -64,16 +64,29 @@ class Config:
         return f"{self._env_prefix}{suffix}"
 
     def add_destination(self, dest: str) -> bool:
-        self._dest.append(dest)
-        return True
+        if dest not in self._ACCEPTABLE_DEST:
+            return False
+        
+        if dest not in self._dest:
+            self._dest.append(dest)
 
+        return True 
+    
     def remove_destination(self, idx: int) -> bool:
-        self._dest.pop(idx)
-        return True
+        try:
+            self._dest.pop(idx)
+            return True
+        except IndexError:
+            return False
 
     @property
-    def dest(self) -> str:
-        return self._dest
+    def dest(self) -> List[str]:
+        return self._dest.copy()
+
+    @property
+    def dest_string(self) -> str:
+        """Return destinations as comma-separated string for backwards compatibility."""
+        return ','.join(self._dest)
 
     @property
     def level(self) -> str:
