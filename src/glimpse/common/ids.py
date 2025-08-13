@@ -2,7 +2,6 @@ import uuid
 import os
 import threading
 from typing import Optional
-from ..tracer import Tracer
 
 class IDGenerator:
     """Thread and multi-processing safe ID generator for tracing."""

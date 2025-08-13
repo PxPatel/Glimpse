@@ -312,7 +312,7 @@ class Tracer:
         
         log_entry = LogEntry(
             entry_id=self._id_generator.new_entry_id(),
-            call_id=call_info[call_info],
+            call_id=call_info['call_id'],
             trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
 
             level=self._config.level,
@@ -334,7 +334,7 @@ class Tracer:
         
         log_entry = LogEntry(
             entry_id=self._id_generator.new_entry_id(),
-            call_id=call_info[call_info],
+            call_id=call_info['call_id'],
             trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
 
             level=self._config.level,
@@ -355,7 +355,7 @@ class Tracer:
         
         log_entry = LogEntry(
             entry_id=self._id_generator.new_entry_id(),
-            call_id=call_info[call_info],
+            call_id=call_info['call_id'],
             trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
 
             level=self._config.level,

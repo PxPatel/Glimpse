@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch, call
 from datetime import datetime
+from glimpse.common.ids import IDGenerator
 from glimpse.tracer import Tracer
 from glimpse.config import Config
 from glimpse.policy.policy import TracingPolicy
@@ -64,6 +65,11 @@ class TestTracer:
         frame.f_globals = {"__name__": "test_module"}
         frame.f_locals = {"arg1": "value1", "arg2": "value2"}
         return frame
+    
+    @pytest.fixture
+    def id_generator(self):
+        """Create a test IDGenerator instance"""
+        return IDGenerator()
     
     # ======================= INITIALIZATION TESTS =======================
     
@@ -779,9 +785,10 @@ class TestTracer:
 
     # ======================= LOGGING METHOD TESTS =======================
     
-    def test_log_function_entry(self, tracer, mock_frame):
+    def test_log_function_entry(self, tracer, mock_frame, id_generator):
         """Test _log_function_entry creates correct LogEntry."""
         call_info = {
+            'call_id': id_generator.new_call_id(), 
             'qualname': 'test_module.test_func',
             'function_name': 'test_func',
             'start_time': datetime(2023, 1, 1, 12, 0, 0)
@@ -798,9 +805,10 @@ class TestTracer:
             assert log_entry.function == "test_module.test_func"
             assert "test_func(arg1='value1')" in log_entry.args
 
-    def test_log_function_exit(self, tracer):
+    def test_log_function_exit(self, tracer, id_generator):
         """Test _log_function_exit creates correct LogEntry."""
         call_info = {
+            'call_id': id_generator.new_call_id(), 
             'qualname': 'test_module.test_func',
             'function_name': 'test_func',
             'start_time': datetime.now() - timedelta(milliseconds=100)
@@ -818,9 +826,10 @@ class TestTracer:
         assert log_entry.result is not None
         assert log_entry.duration_ms is not None
 
-    def test_log_function_exception(self, tracer):
+    def test_log_function_exception(self, tracer, id_generator):
         """Test _log_function_exception creates correct LogEntry."""
         call_info = {
+            'call_id': id_generator.new_call_id(), 
             'qualname': 'test_module.test_func',
             'function_name': 'test_func'
         }
@@ -1005,9 +1014,10 @@ class TestTracer:
             assert call_info['function_name'] == "测试函数"
             assert call_info['module_name'] == "测试模块"
 
-    def test_large_return_values(self, tracer):
+    def test_large_return_values(self, tracer, id_generator):
         """Test handling of very large return values."""
         call_info = {
+            'call_id': id_generator.new_call_id(), 
             'qualname': 'test_func',
             'function_name': 'test_func',
             'start_time': datetime.now()
@@ -1038,7 +1048,7 @@ class TestTracer:
         assert "(args unavailable)" in result or "arg1=" in result
 
     @patch('glimpse.tracer.datetime')
-    def test_time_measurement_accuracy(self, mock_datetime, tracer):
+    def test_time_measurement_accuracy(self, mock_datetime, tracer, id_generator):
         """Test that time measurements are reasonably accurate."""
         # Mock datetime to control timing
         start_time = datetime(2023, 1, 1, 12, 0, 0, 0)
@@ -1047,6 +1057,7 @@ class TestTracer:
         mock_datetime.now.return_value = end_time
         
         call_info = {
+            'call_id': id_generator.new_call_id(), 
             'qualname': 'test_func',
             'function_name': 'test_func',
             'start_time': start_time
