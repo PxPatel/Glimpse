@@ -40,11 +40,11 @@ class IDGenerator:
 
     def new_call_id(self) -> str:
         """Generate unique call ID for function correlation."""
-        return f"call_{uuid.uuid4().hex[:12]}"  # Shorter for readability
+        return f"{uuid.uuid4().hex[:12]}"  # Shorter for readability
     
     def new_trace_id(self) -> str:
         """Generate unique trace ID for distributed correlation."""
-        return f"trace_{uuid.uuid4().hex[:12]}"
+        return f"{uuid.uuid4().hex[:12]}"
     
     def set_trace_id(self, trace_id: str):
         """Set trace ID for distributed tracing context."""

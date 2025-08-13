@@ -19,7 +19,7 @@ class LogWriter:
             self._writers.append(self._initialize_destination(dest))
 
     def _initialize_destination(self, dest):
-        dest = self._config.dest.lower()
+        dest = dest.lower()
 
         if dest == "sqllite":
             return SQLiteWriter(self._config)
