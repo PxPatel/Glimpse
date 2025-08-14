@@ -79,7 +79,7 @@ class TestTracer:
         # Mock the caller frame
         mock_frame = Mock()
         mock_caller_frame = Mock()
-        mock_caller_frame.f_code.co_filename = "/path/to/main.py"
+        mock_caller_frame.f_globals = {'__name__': 'main.app'}
         mock_frame.f_back = mock_caller_frame
         mock_currentframe.return_value = mock_frame
         
@@ -88,7 +88,7 @@ class TestTracer:
             
             assert tracer._config == config
             assert tracer._policy == policy
-            assert tracer._init_module_name == "main"
+            assert tracer._init_module_name == "main.app"
             assert tracer._call_metadata == {}
             assert tracer._tracing_active is None
             mock_log_writer.assert_called_once_with(config, True)
