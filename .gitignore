@@ -5,6 +5,9 @@
 # IDE settings
 .vscode
 
+# builds
+build
+
 # Local example files for testing use cases
 examples
 
@@ -17,3 +20,6 @@ glimpse.egg-info
 
 # Glimpse policy files
 *-policy.json
+
+# Misc files
+talk.txt

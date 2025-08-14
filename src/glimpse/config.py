@@ -1,10 +1,48 @@
 import os
+from pathlib import Path
 from typing import List, Optional, Dict
 from dotenv import load_dotenv
 
-load_dotenv()
-env = os.getenv("env", "DEV").upper()
-load_dotenv(dotenv_path = f".env.{env.lower()}")
+def load_env_files():
+    """
+    Load environment files, trying multiple locations:
+    1. Current working directory
+    2. Directory where this config.py file is located
+    3. Project root (parent directories)
+    """
+    # Try current working directory first
+    cwd = Path.cwd()
+    env_file = cwd / ".env"
+    
+    if env_file.exists():
+        load_dotenv(dotenv_path=env_file)
+        env_value = os.getenv("env", "DEV").upper()
+        env_specific = cwd / f".env.{env_value.lower()}"
+        if env_specific.exists():
+            load_dotenv(dotenv_path=env_specific)
+        return True
+    
+    # Try directory where this config.py file is located and walk up
+    config_dir = Path(__file__).resolve().parent
+    while config_dir != config_dir.parent:  # Stop at filesystem root
+        env_file = config_dir / ".env"
+        if env_file.exists():
+            load_dotenv(dotenv_path=env_file)
+            env_value = os.getenv("env", "DEV").upper()
+            env_specific = config_dir / f".env.{env_value.lower()}"
+            if env_specific.exists():
+                load_dotenv(dotenv_path=env_specific)
+            return True
+        config_dir = config_dir.parent
+    
+    # Fallback to original behavior
+    load_dotenv()
+    env = os.getenv("env", "DEV").upper()
+    load_dotenv(dotenv_path=f".env.{env.lower()}")
+    return False
+
+# Load environment files when module is imported
+load_env_files()
 
 class Config:
     _CORE_KEYS = {"DEST", "LEVEL", "TRACE_ID"}
@@ -73,12 +111,12 @@ class Config:
         return True 
     
     def remove_destination(self, idx: int) -> bool:
-        try:
+        if idx < len(self._dest):
             self._dest.pop(idx)
             return True
-        except IndexError:
-            return False
 
+        raise IndexError(f"'idx' not in range of destination list")
+        
     @property
     def dest(self) -> List[str]:
         return self._dest.copy()
