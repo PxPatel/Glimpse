@@ -284,9 +284,10 @@ class Tracer:
     def _is_tracer_code(self, module_name: str, filename: str) -> bool:
         """Check if the code belongs to the tracer itself to avoid self-tracing."""
         return (
+            # Only skip actual glimpse library code
             'glimpse' in module_name or
-            'glimpse' in filename or
-            module_name == '__main__' and 'tracer' in filename.lower()
+            '/glimpse/' in filename or
+            '\\glimpse\\' in filename  # Windows compatibility
         )
     
     def _get_function_args_from_frame(self, frame) -> str:
