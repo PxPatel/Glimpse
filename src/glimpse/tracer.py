@@ -88,13 +88,15 @@ class Tracer:
             result = None
             level = self._config.level
 
+            # Generate call_id ONCE for this function execution
+            call_id = self._id_generator.new_call_id()
             call_str = self.get_function_arguments(func, *args, **kwargs)
 
             try:
                 start_time = datetime.now()
                 start_log_entry = LogEntry(
                     entry_id=self._id_generator.new_entry_id(),
-                    call_id=self._id_generator.new_call_id(),
+                    call_id=call_id, 
                     trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
                     level=level,
                     function=func.__qualname__,
@@ -111,7 +113,7 @@ class Tracer:
                 end_time = datetime.now()
                 end_log_entry = LogEntry(
                     entry_id=self._id_generator.new_entry_id(),
-                    call_id=self._id_generator.new_call_id(),
+                    call_id=call_id,
                     trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
                     level=level,
                     function=func.__qualname__,
@@ -131,7 +133,7 @@ class Tracer:
 
                 error_log_entry = LogEntry(
                     entry_id=self._id_generator.new_entry_id(),
-                    call_id=self._id_generator.new_call_id(),
+                    call_id=call_id,
                     trace_id=self._id_generator.get_current_trace_id() if self._config.enable_trace_id else None,
                     level=level,
                     function=func.__qualname__,
@@ -148,6 +150,7 @@ class Tracer:
 
         return wrapper
     
+
     def _truncate(self, value: str) -> str:
         max_len = self._config.max_field_length
         if len(value) > max_len:
