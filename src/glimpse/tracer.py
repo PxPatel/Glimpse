@@ -21,8 +21,7 @@ class Tracer:
 
         # Capture where tracer was initialized
         caller_frame = inspect.currentframe().f_back
-        self._init_file = Path(caller_frame.f_code.co_filename).resolve()
-        self._init_module_name = self._get_module_name_from_file(self._init_file)
+        self._init_module_name = caller_frame.f_globals.get('__name__')
 
         # Execution variables
         self._call_metadata = {}
@@ -30,6 +29,7 @@ class Tracer:
 
         # Think about logging an entry at initialization for record of instance
 
+    # Removed from use
     def _get_module_name_from_file(self, file_path: Path) -> Optional[str]:
         """
         Convert a file path to its Python module name.
