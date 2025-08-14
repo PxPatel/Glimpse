@@ -145,12 +145,16 @@ class TracingPolicy:
         
         # Pre-compile patterns for better performance
         for pattern in included:
+            if not pattern.strip():
+                continue
             if self._has_wildcards(pattern):
                 self.wildcard_included.add(self._compile_pattern(pattern))
             else:
                 self.exact_included.add(pattern)
                 
         for pattern in project_roots:
+            if not pattern.strip():
+                continue
             if self._has_wildcards(pattern):
                 self.wildcard_project_roots.add(self._compile_pattern(pattern))
             else:
