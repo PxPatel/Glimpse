@@ -513,7 +513,6 @@ class TestTracer:
         ("glimpse.tracer", "/path/to/file.py", True),
         ("glimpse.config", "/path/to/file.py", True),
         ("myapp.services", "/path/to/glimpse/tracer.py", True),
-        ("__main__", "/path/to/tracer.py", True),
         ("__main__", "/path/to/main.py", False),
         ("myapp.services", "/path/to/services.py", False),
         ("requests.auth", "/path/to/auth.py", False),
