@@ -1,8 +1,7 @@
 {
     "version": "1.0",
     "name": "my_policy",  
-    "included_packages": ["myapp", "mylib"],
-    "trace_depth": 5,
-    "project_root_packages": ["src"],
-    "auto_trace_subpackages": true
+    "exact_modules": ["mylib"],
+    "package_trees": ["myapp"],
+    "trace_depth": 5
 }

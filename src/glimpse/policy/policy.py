@@ -28,7 +28,7 @@ class ExactPatternTrie:
         node['_is_pattern'] = True
     
     def matches(self, module_name: str) -> bool:
-        """Check if module_name matches any pattern in the trie."""
+        """Check if module_name matches any pattern in the trie (including submodules)."""
         if not module_name.strip():
             return False
             
@@ -48,51 +48,82 @@ class ExactPatternTrie:
         return False
 
 
-# Modified TracingPolicy class with trie optimization
-class TracingPolicy:
-    """TracingPolicy with trie-optimized exact pattern matching."""
+class ExactModuleSet:
+    """Simple set-based storage for exact module matching (no submodules)."""
     
-    def __init__(self, included_packages=None, trace_depth=5, project_root_packages=None, auto_trace_subpackages=False):
-        # Store original patterns
-        included = included_packages or []
-        project_roots = project_root_packages or []
+    def __init__(self):
+        self.modules = set()
+    
+    def add_module(self, module: str):
+        """Add a module to the exact set."""
+        if module.strip():
+            self.modules.add(module)
+    
+    def matches(self, module_name: str) -> bool:
+        """Check if module_name exactly matches any stored module."""
+        return module_name in self.modules
+
+
+class TracingPolicy:
+    """TracingPolicy with clean exact_modules vs package_trees distinction."""
+    
+    def __init__(self, exact_modules=None, package_trees=None, trace_depth=5):
+        # Initialize collections
+        exact_mods = exact_modules or []
+        package_trees_list = package_trees or []
         
-        # Separate exact patterns from wildcard patterns for optimization
-        self.exact_included_trie = ExactPatternTrie()
-        self.wildcard_included = set()
-        self.exact_project_roots_trie = ExactPatternTrie()
-        self.wildcard_project_roots = set()
+        # Exact modules - only match exactly, no submodules
+        self.exact_modules_set = ExactModuleSet()
+        self.exact_modules_wildcards = set()
         
-        # Pre-compile patterns for better performance
-        for pattern in included:
-            if not pattern.strip():
+        # Package trees - match package and all submodules  
+        self.package_trees_trie = ExactPatternTrie()
+        self.package_trees_wildcards = set()
+        
+        # Process exact modules
+        for module in exact_mods:
+            if not module.strip():
                 continue
-            if self._has_wildcards(pattern):
-                self.wildcard_included.add(self._compile_pattern(pattern))
+            if self._has_wildcards(module):
+                self.exact_modules_wildcards.add(self._compile_exact_pattern(module))
             else:
-                self.exact_included_trie.add_pattern(pattern)
-                
-        for pattern in project_roots:
-            if not pattern.strip():
+                self.exact_modules_set.add_module(module)
+        
+        # Process package trees
+        for package in package_trees_list:
+            if not package.strip():
                 continue
-            if self._has_wildcards(pattern):
-                self.wildcard_project_roots.add(self._compile_pattern(pattern))
+            if self._has_wildcards(package):
+                self.package_trees_wildcards.add(self._compile_tree_pattern(package))
             else:
-                self.exact_project_roots_trie.add_pattern(pattern)
+                self.package_trees_trie.add_pattern(package)
         
         self.trace_depth = trace_depth
-        self.auto_trace_subpackages = auto_trace_subpackages and (
-            bool(self.exact_project_roots_trie.root) or len(self.wildcard_project_roots) > 0
-        )
 
     def _has_wildcards(self, pattern: str) -> bool:
         """Check if pattern contains wildcard characters."""
         return any(char in pattern for char in '*?[]')
 
-    def _compile_pattern(self, pattern: str) -> Pattern: 
-        """Pre-compile wildcard pattern to regex for faster matching."""
+    def _compile_exact_pattern(self, pattern: str) -> Pattern:
+        """Compile wildcard pattern for exact module matching (no submodules)."""
         regex_pattern = fnmatch.translate(pattern)
+        regex_pattern = regex_pattern.replace('.*', '[^.]*')
         return re.compile(regex_pattern)
+
+    def _compile_tree_pattern(self, pattern: str) -> Pattern:
+        """Compile wildcard pattern for package tree matching (including submodules)."""
+        # For package trees, we want to match the pattern and any submodules
+        # Convert fnmatch pattern to regex, but allow additional dot-separated segments
+        base_regex = fnmatch.translate(pattern)
+        # Remove the $ anchor and add optional submodule matching
+        if base_regex.endswith('\\Z'):
+            base_regex = base_regex[:-2]  # Remove \Z
+        elif base_regex.endswith('$'):
+            base_regex = base_regex[:-1]  # Remove $
+        
+        # Add pattern to match submodules: either end here or continue with .anything
+        tree_regex = f"({base_regex})(\\..*)?"
+        return re.compile(f"^{tree_regex}$")
 
     @classmethod
     def load(cls, policy_path: Optional[str] = None):
@@ -161,44 +192,57 @@ class TracingPolicy:
             )
         
         # Extract configuration with defaults
-        included_packages = policy_data.get("included_packages", [])
+        exact_modules = policy_data.get("exact_modules", [])
+        package_trees = policy_data.get("package_trees", [])
         trace_depth = policy_data.get("trace_depth", 5)
-        auto_trace_subpackages = policy_data.get("auto_trace_subpackages", False)
-        project_root_packages = policy_data.get("project_root_packages", None)
         
         return cls(
-            included_packages=included_packages,
-            trace_depth=trace_depth,
-            auto_trace_subpackages=auto_trace_subpackages,
-            project_root_packages=project_root_packages
+            exact_modules=exact_modules,
+            package_trees=package_trees,
+            trace_depth=trace_depth
         )
 
     def should_trace_package(self, module_name: str) -> bool:
-        """Check if a package should be traced based on policy rules."""
-        if self.auto_trace_subpackages:
-            if self._op_matches_exact_patterns_(module_name, self.exact_project_roots_trie):
-                return True
-            if self._matches_wildcard_patterns(module_name, self.wildcard_project_roots):
-                return True
+        """
+        Check if a package should be traced based on policy rules.
         
-        # Check included packages
-        if self._op_matches_exact_patterns_(module_name, self.exact_included_trie):
+        Priority order:
+        1. Package trees (more permissive, wins over exact modules in overlap)
+        2. Exact modules (only if not covered by package trees)
+        """
+        
+        # First check package trees (wins in overlap scenarios)
+        if self._matches_package_trees(module_name):
             return True
-            
-        if self._matches_wildcard_patterns(module_name, self.wildcard_included):
+        
+        # Then check exact modules  
+        if self._matches_exact_modules(module_name):
             return True
             
         return False
-
-    @staticmethod
-    def _op_matches_exact_patterns_(module_name: str, exact_patterns_trie: ExactPatternTrie) -> bool:
-        """ Optimized O(k) exact pattern matching using trie data structure."""
-        return exact_patterns_trie.matches(module_name)
-
-    @staticmethod
-    def _matches_wildcard_patterns(module_name: str, wildcard_patterns: List[Pattern]):
-        """Check wildcard pattern matching with pre-compiled regex."""
-        for compiled_pattern in wildcard_patterns:
+    
+    def _matches_package_trees(self, module_name: str) -> bool:
+        """Check if module matches any package tree (including submodules)."""
+        # Check exact package trees via trie (matches package + submodules)
+        if self.package_trees_trie.matches(module_name):
+            return True
+        
+        # Check wildcard package trees (should match package + submodules)
+        for compiled_pattern in self.package_trees_wildcards:
             if compiled_pattern.match(module_name):
                 return True
+        
+        return False
+    
+    def _matches_exact_modules(self, module_name: str) -> bool:
+        """Check if module matches any exact module (no submodules)."""
+        # Check exact string matches
+        if self.exact_modules_set.matches(module_name):
+            return True
+        
+        # Check wildcard exact matches (should NOT match submodules)
+        for compiled_pattern in self.exact_modules_wildcards:
+            if compiled_pattern.match(module_name):
+                return True
+        
         return False
