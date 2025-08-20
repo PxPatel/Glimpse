@@ -53,7 +53,6 @@ class SQLiteWriter(BaseWriter):
             result TEXT,
             duration_ms REAL,
             exception TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         
         -- Indexes for common query patterns
