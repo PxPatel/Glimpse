@@ -31,9 +31,9 @@ class TestConfig:
     def test_init_with_multiple_destinations_list(self):
         """Test Config initialization with multiple destinations as list."""
         with patch.dict(os.environ, {}, clear=True):
-            config = Config(dest=["json", "jsonl", "sqllite"], env_override=False)
+            config = Config(dest=["json", "jsonl", "sqlite"], env_override=False)
             
-            assert config.dest == ["json", "jsonl", "sqllite"]
+            assert config.dest == ["json", "jsonl", "sqlite"]
             assert len(config.dest) == 3
 
     def test_init_with_custom_values(self):
@@ -42,7 +42,7 @@ class TestConfig:
         
         with patch.dict(os.environ, {}, clear=True):
             config = Config(
-                dest=["json", "sqllite"],
+                dest=["json", "sqlite"],
                 level="debug",
                 enable_trace_id=True,
                 params=custom_params,
@@ -51,7 +51,7 @@ class TestConfig:
                 max_field_length=256
             )
             
-            assert config.dest == ["json", "sqllite"]
+            assert config.dest == ["json", "sqlite"]
             assert config.level == "DEBUG"  # Should be uppercased
             assert config.enable_trace_id is True
             assert config.params == custom_params
@@ -62,10 +62,10 @@ class TestConfig:
         """Test that invalid destinations are filtered out from list."""
         with patch.dict(os.environ, {}, clear=True):
             # Mix of valid and invalid destinations
-            config = Config(dest=["json", "invalid", "jsonl", "bad_dest", "sqllite"], env_override=False)
+            config = Config(dest=["json", "invalid", "jsonl", "bad_dest", "sqlite"], env_override=False)
             
             # Should only keep valid destinations
-            assert config.dest == ["json", "jsonl", "sqllite"]
+            assert config.dest == ["json", "jsonl", "sqlite"]
             assert "invalid" not in config.dest
             assert "bad_dest" not in config.dest
 
@@ -88,7 +88,7 @@ class TestConfig:
             Config(dest=[], env_override=False)
 
     @pytest.mark.parametrize("valid_dest", [
-        "json", "jsonl", "sqllite", "mongo"
+        "json", "jsonl", "sqlite", "mongo"
     ])
     def test_init_valid_single_destinations(self, valid_dest):
         """Test Config accepts all valid single destinations."""
@@ -100,9 +100,9 @@ class TestConfig:
         """Test Config accepts multiple valid destinations."""
         valid_combinations = [
             ["json", "jsonl"],
-            ["jsonl", "sqllite"],
-            ["json", "sqllite", "mongo"],
-            ["json", "jsonl", "sqllite", "mongo"]
+            ["jsonl", "sqlite"],
+            ["json", "sqlite", "mongo"],
+            ["json", "jsonl", "sqlite", "mongo"]
         ]
         
         for dest_list in valid_combinations:
@@ -113,13 +113,13 @@ class TestConfig:
     def test_init_duplicate_destinations_in_list(self):
         """Test handling of duplicate destinations in list."""
         with patch.dict(os.environ, {}, clear=True):
-            config = Config(dest=["json", "jsonl", "json", "sqllite", "jsonl"], env_override=False)
+            config = Config(dest=["json", "jsonl", "json", "sqlite", "jsonl"], env_override=False)
             
             # Should preserve order but remove duplicates might be expected behavior
             # Based on current implementation, duplicates would remain
             assert "json" in config.dest
             assert "jsonl" in config.dest
-            assert "sqllite" in config.dest
+            assert "sqlite" in config.dest
 
     def test_init_params_none_handling(self):
         """Test Config handles None params correctly."""
@@ -179,7 +179,7 @@ class TestConfig:
     def test_load_from_env_multiple_destinations(self):
         """Test loading multiple destinations from environment variables."""
         env_vars = {
-            "GLIMPSE_DEST": "json,jsonl,sqllite",
+            "GLIMPSE_DEST": "json,jsonl,sqlite",
             "GLIMPSE_LEVEL": "debug",
             "GLIMPSE_TRACE_ID": "true"
         }
@@ -187,13 +187,13 @@ class TestConfig:
         with patch.dict(os.environ, env_vars, clear=True):
             config = Config()
             
-            assert config.dest == ["json", "jsonl", "sqllite"]
+            assert config.dest == ["json", "jsonl", "sqlite"]
             assert len(config.dest) == 3
 
     def test_load_from_env_destinations_with_spaces(self):
         """Test loading destinations with spaces around commas."""
         env_vars = {
-            "GLIMPSE_DEST": " json , jsonl , sqllite ",
+            "GLIMPSE_DEST": " json , jsonl , sqlite ",
             "GLIMPSE_LEVEL": "info"
         }
         
@@ -201,19 +201,19 @@ class TestConfig:
             config = Config()
             
             # Should handle spaces correctly
-            assert config.dest == ["json", "jsonl", "sqllite"]
+            assert config.dest == ["json", "jsonl", "sqlite"]
 
     def test_load_from_env_destinations_with_invalid_mixed(self):
         """Test loading destinations with mix of valid and invalid from environment."""
         env_vars = {
-            "GLIMPSE_DEST": "json,invalid,jsonl,bad,sqllite"
+            "GLIMPSE_DEST": "json,invalid,jsonl,bad,sqlite"
         }
         
         with patch.dict(os.environ, env_vars, clear=True):
             config = Config()
             
             # Should filter out invalid destinations
-            assert config.dest == ["json", "jsonl", "sqllite"]
+            assert config.dest == ["json", "jsonl", "sqlite"]
             assert "invalid" not in config.dest
             assert "bad" not in config.dest
 
@@ -288,7 +288,7 @@ class TestConfig:
     def test_load_from_env_override_disabled(self):
         """Test that env_override=False prevents environment loading."""
         env_vars = {
-            "GLIMPSE_DEST": "mongo,sqllite",
+            "GLIMPSE_DEST": "mongo,sqlite",
             "GLIMPSE_LEVEL": "error",
             "GLIMPSE_CUSTOM": "ignored",
         }
@@ -308,7 +308,7 @@ class TestConfig:
     def test_load_from_env_partial_override(self):
         """Test environment variables override only provided values."""
         env_vars = {
-            "GLIMPSE_DEST": "mongo,sqllite",
+            "GLIMPSE_DEST": "mongo,sqlite",
             # LEVEL not provided - should use constructor value
             "GLIMPSE_CUSTOM": "from_env",
         }
@@ -316,7 +316,7 @@ class TestConfig:
         with patch.dict(os.environ, env_vars, clear=True):
             config = Config(level="debug")  # Constructor level
             
-            assert config.dest == ["mongo", "sqllite"]  # From environment
+            assert config.dest == ["mongo", "sqlite"]  # From environment
             assert config.level == "DEBUG"  # From constructor (env didn't override)
             assert config.params == {"custom": "from_env"}
 
@@ -348,7 +348,7 @@ class TestConfig:
         
         with patch.dict(os.environ, {}, clear=True):
             config = Config(
-                dest=["json", "sqllite"],
+                dest=["json", "sqlite"],
                 level="warning",
                 enable_trace_id=True,
                 params=custom_params,
@@ -357,7 +357,7 @@ class TestConfig:
                 env_override=False
             )
             
-            assert config.dest == ["json", "sqllite"]
+            assert config.dest == ["json", "sqlite"]
             assert config.level == "WARNING"
             assert config.enable_trace_id is True
             assert config.params == custom_params
@@ -418,18 +418,18 @@ class TestConfig:
             config = Config(dest="jsonl", env_override=False)
             
             # Add valid destination
-            result = config.add_destination("sqllite")
+            result = config.add_destination("sqlite")
             assert result is True
-            assert config.dest == ["jsonl", "sqllite"]
+            assert config.dest == ["jsonl", "sqlite"]
             
             # Add another destination
             config.add_destination("json")
-            assert config.dest == ["jsonl", "sqllite", "json"]
+            assert config.dest == ["jsonl", "sqlite", "json"]
 
     def test_add_destination_duplicate(self):
         """Test adding duplicate destination."""
         with patch.dict(os.environ, {}, clear=True):
-            config = Config(dest=["jsonl", "sqllite"], env_override=False)
+            config = Config(dest=["jsonl", "sqlite"], env_override=False)
             
             # Add existing destination - behavior depends on implementation
             config.add_destination("jsonl")
@@ -439,10 +439,10 @@ class TestConfig:
     def test_remove_destination_method(self):
         """Test remove_destination method."""
         with patch.dict(os.environ, {}, clear=True):
-            config = Config(dest=["jsonl", "sqllite", "json"], env_override=False)
+            config = Config(dest=["jsonl", "sqlite", "json"], env_override=False)
             
             # Remove by index
-            result = config.remove_destination(1)  # Remove "sqllite"
+            result = config.remove_destination(1)  # Remove "sqlite"
             assert result is True
             assert config.dest == ["jsonl", "json"]
             
@@ -502,7 +502,7 @@ class TestConfig:
     def test_constructor_and_environment_integration_multiple_dest(self):
         """Test integration between constructor parameters and environment variables with multiple destinations."""
         env_vars = {
-            "GLIMPSE_DEST": "mongo,sqllite",  # Override constructor
+            "GLIMPSE_DEST": "mongo,sqlite",  # Override constructor
             "GLIMPSE_CUSTOM_PARAM": "env_value",  # Additional param
         }
         
@@ -515,7 +515,7 @@ class TestConfig:
                 params=constructor_params  # Should be merged with env params
             )
             
-            assert config.dest == ["mongo", "sqllite"]  # From environment
+            assert config.dest == ["mongo", "sqlite"]  # From environment
             assert config.level == "DEBUG"  # From constructor
             
             expected_params = {
@@ -534,7 +534,7 @@ class TestConfig:
         
         with patch.dict(os.environ, env_vars, clear=True):
             config = Config(
-                dest=["jsonl", "sqllite"],  # Should be overridden
+                dest=["jsonl", "sqlite"],  # Should be overridden
                 level="info",  # Should be overridden
                 enable_trace_id=False  # Should be overridden
             )
@@ -581,10 +581,10 @@ class TestConfig:
     def test_missing_environment_variables(self):
         """Test behavior when expected environment variables are missing."""
         with patch.dict(os.environ, {}, clear=True):
-            config = Config(dest=["jsonl", "sqllite"], level="info")
+            config = Config(dest=["jsonl", "sqlite"], level="info")
             
             # Should use constructor/default values
-            assert config.dest == ["jsonl", "sqllite"]
+            assert config.dest == ["jsonl", "sqlite"]
             assert config.level == "INFO"
             assert config.enable_trace_id is False
             assert config.params == {}
@@ -625,7 +625,7 @@ class TestConfig:
     def test_class_constants(self):
         """Test that class constants are correctly defined."""
         assert Config._CORE_KEYS == {"DEST", "LEVEL", "TRACE_ID"}
-        assert Config._ACCEPTABLE_DEST == {"json", "jsonl", "sqllite", "mongo"}
+        assert Config._ACCEPTABLE_DEST == {"json", "jsonl", "sqlite", "mongo"}
         
         # Verify constants are used correctly for single destinations
         for dest in Config._ACCEPTABLE_DEST:
@@ -658,7 +658,7 @@ class TestConfig:
         """Test that Config creation is reasonably fast even with many env vars and multiple destinations."""
         # Create many environment variables
         many_env_vars = {f"GLIMPSE_PARAM_{i}": f"value_{i}" for i in range(100)}
-        many_env_vars["GLIMPSE_DEST"] = "jsonl,sqllite,json"
+        many_env_vars["GLIMPSE_DEST"] = "jsonl,sqlite,json"
         many_env_vars["GLIMPSE_LEVEL"] = "info"
         
         with patch.dict(os.environ, many_env_vars, clear=True):
@@ -687,9 +687,9 @@ class TestConfig:
             config = Config(dest="jsonl", env_override=False)
             assert config.dest == ["jsonl"]
             
-        with patch.dict(os.environ, {"GLIMPSE_DEST": "sqllite"}, clear=True):
+        with patch.dict(os.environ, {"GLIMPSE_DEST": "sqlite"}, clear=True):
             config = Config()
-            assert config.dest == ["sqllite"]
+            assert config.dest == ["sqlite"]
 
     def test_backwards_compatibility_error_behavior(self):
         """Test that error conditions still behave the same way."""
@@ -707,9 +707,9 @@ class TestConfig:
     def test_isolated_environment_tests_multiple_dest(self):
         """Test that environment mocking properly isolates tests with multiple destinations."""
         # Test 1: Set specific environment with multiple destinations
-        with patch.dict(os.environ, {"GLIMPSE_DEST": "mongo,sqllite"}, clear=True):
+        with patch.dict(os.environ, {"GLIMPSE_DEST": "mongo,sqlite"}, clear=True):
             config1 = Config()
-            assert config1.dest == ["mongo", "sqllite"]
+            assert config1.dest == ["mongo", "sqlite"]
         
         # Test 2: Different environment should not interfere
         with patch.dict(os.environ, {"GLIMPSE_DEST": "json"}, clear=True):
