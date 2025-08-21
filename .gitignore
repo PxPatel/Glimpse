@@ -7,6 +7,8 @@
 
 # builds
 build
+dist/
+*.egg-info
 
 # Local example files for testing use cases
 examples
