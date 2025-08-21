@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from glimpse.common.ids import IDGenerator
 from glimpse.tracer import Tracer
 from glimpse.config import Config
-from glimpse.policy.policy import TracingPolicy
+from glimpse.policy import TracingPolicy
 from glimpse.writers.logentry import LogEntry
 from glimpse.writers.logwriter import LogWriter
 

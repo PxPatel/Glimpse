@@ -5,7 +5,7 @@ import time
 import tempfile
 from pathlib import Path
 from unittest.mock import patch, mock_open, MagicMock
-from glimpse.policy.policy import TracingPolicy, ExactPatternTrie, ExactModuleSet
+from glimpse.policy import TracingPolicy, ExactPatternTrie, ExactModuleSet
 
 class TestExactPatternTrie:
     """Unit tests for the ExactPatternTrie data structure."""
