@@ -66,9 +66,10 @@ class Tracer:
         
         if self._init_module_name and module_name == self._init_module_name:
             return True
-        
+            
         # Check if it's an explicitly included external package or internal subpackage 
-        return self._policy.should_trace_package(module_name)
+        trace_bool = self._policy.should_trace_package(module_name)
+        return trace_bool
 
     @staticmethod
     def get_function_arguments(func, *args, **kwargs):
@@ -196,7 +197,6 @@ class Tracer:
         """
         if not self._tracing_active:
             return None
-            
         try:
             if event == 'call':
                 return self._handle_function_call(frame)
@@ -216,16 +216,12 @@ class Tracer:
         # Check trace depth limit
         if len(self._call_metadata) >= self._policy.trace_depth:
             return None
-            
+ 
         # Get function info
         func_name = frame.f_code.co_name
         module_name = frame.f_globals.get('__name__', '')
         filename = frame.f_code.co_filename
         
-        # Skip tracer's own methods
-        if self._is_tracer_code(module_name, filename):
-            return None
-            
         # Create a mock function object for policy checking
         mock_func = type('MockFunction', (), {
             '__module__': module_name,
@@ -280,15 +276,6 @@ class Tracer:
             self._log_function_exception(call_info, exc_info)
             
         return self._trace_calls
-
-    def _is_tracer_code(self, module_name: str, filename: str) -> bool:
-        """Check if the code belongs to the tracer itself to avoid self-tracing."""
-        return (
-            # Only skip actual glimpse library code
-            'glimpse' in module_name or
-            '/glimpse/' in filename or
-            '\\glimpse\\' in filename  # Windows compatibility
-        )
     
     def _get_function_args_from_frame(self, frame) -> str:
         """Extract function arguments from frame for logging."""
