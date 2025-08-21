@@ -6,7 +6,7 @@ from typing import Optional
 from functools import wraps
 from datetime import datetime
 from .config import Config 
-from .policy.policy import TracingPolicy
+from .policy import TracingPolicy
 from .writers.logentry import LogEntry
 from .writers.logwriter import LogWriter
 from .common.ids import IDGenerator
