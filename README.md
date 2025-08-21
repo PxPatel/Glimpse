@@ -68,8 +68,9 @@ tracer.stop()
 
 ```python
 # Traces everything matching your policy
-with tracer:
-    your_application_code()
+tracer.run()
+your_application_code()
+tracer.stop()
 ```
 
 ### Manual Decorators
