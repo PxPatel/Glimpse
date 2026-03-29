@@ -925,10 +925,12 @@ class TestTracer:
             boom()
         except ValueError as exc:
             import traceback as tb_mod
+            import os
             tb_frames = tb_mod.extract_tb(exc.__traceback__)
-            # The last frame must come from this test file, not from tracer.py
+            # The last frame must come from the user's function (boom), not from glimpse/tracer.py
             last_frame = tb_frames[-1]
-            assert "tracer.py" not in last_frame.filename
+            tracer_module_path = os.path.join("glimpse", "tracer.py")
+            assert tracer_module_path not in last_frame.filename
 
     def test_trace_function_does_not_wrap_in_plain_exception(self, tracer):
         """BUG-04: Exception type must not be the generic Exception class."""
