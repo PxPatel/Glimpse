@@ -181,6 +181,7 @@ class Tracer:
         self._tracing_active = False
         self._call_metadata.clear()
         self._writer.flush()
+        self._writer.close()
         print("Glimpse automatic tracing stopped.")
 
     def _trace_calls(self, frame, event, arg):
