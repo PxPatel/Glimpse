@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-02-PLAN.md — Context Manager and Auto-Instrumentation Integration
-last_updated: "2026-03-29T18:49:48.479Z"
+stopped_at: Completed 02-03-PLAN.md — JSON Writer Span Output
+last_updated: "2026-03-29T19:03:40.220Z"
 last_activity: 2026-03-29 -- Completed Plan 1 (Span dataclass + context tracking)
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
   percent: 60
 ---
 
@@ -72,6 +72,8 @@ Recent decisions affecting current work:
 - [Phase 02-01]: ContextVar token semantics used for nesting — set() returns token, reset(token) restores previous value
 - [Phase 02-02]: Class-based _SpanContext instead of @contextmanager generator for reliable token reset in __exit__
 - [Phase 02-02]: write_span no-op on BaseWriter preserves backwards compatibility with all existing writers
+- [Phase 02-span-model]: dataclasses.asdict used in JSONWriter for recursive nested serialization of SpanEvent inside Span.events
+- [Phase 02-span-model]: LogEntry records tagged record_type=log_entry — additive, non-breaking change
 
 ### Pending Todos
 
@@ -84,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T18:49:42.051Z
-Stopped at: Completed 02-02-PLAN.md — Context Manager and Auto-Instrumentation Integration
+Last session: 2026-03-29T19:03:32.855Z
+Stopped at: Completed 02-03-PLAN.md — JSON Writer Span Output
 Resume file: None
