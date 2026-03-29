@@ -52,7 +52,7 @@ class SQLiteWriter(BaseWriter):
             timestamp TEXT NOT NULL,
             result TEXT,
             duration_ms REAL,
-            exception TEXT,
+            exception TEXT
         );
         
         -- Indexes for common query patterns
