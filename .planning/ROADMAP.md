@@ -118,7 +118,7 @@ Wave structure:
 **Goal:** `tracer.span()` accepts extracted propagation context for automatic remote parent linking, and a FastAPI/Starlette middleware handles traceparent extraction automatically — no manual header handling in handlers
 **Requirements**: PROP-03, PROP-04
 **Depends on:** Phase 5
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 06-01-PLAN.md — Add `context` parameter to `_SpanContext`, `_AsyncSpanContext`, `tracer.span()`, `tracer.async_span()` (PROP-03)
@@ -142,4 +142,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Async Support | 2/2 | Complete   | 2026-03-29 |
 | 4. Jaeger Export | 2/2 | Complete   | 2026-03-29 |
 | 5. HTTP Trace Propagation | 2/2 | Complete   | 2026-03-29 |
-| 6. Context-aware span API and HTTP middleware | 0/3 | Not started | - |
+| 6. Context-aware span API and HTTP middleware | 3/3 | Complete   | 2026-03-29 |
