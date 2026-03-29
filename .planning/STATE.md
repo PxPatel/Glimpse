@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-01-PLAN.md — Async Span Context Manager and Decorator
-last_updated: "2026-03-29T20:18:10.095Z"
+stopped_at: Completed 03-02-PLAN.md — Async Tracing Test Suite and Sync Regression Guard
+last_updated: "2026-03-29T20:20:22.028Z"
 last_activity: 2026-03-29 -- Phase 3 execution started
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 7
   percent: 60
 ---
 
@@ -55,6 +55,7 @@ Progress: [██████░░░░] 60%
 | Phase 01-bug-fixes P01 | 3 | 2 tasks | 3 files |
 | Phase 01-bug-fixes P02 | 3 | 2 tasks | 2 files |
 | Phase 03-async-support P01 | 10m | 2 tasks | 1 files |
+| Phase 03-async-support P02 | 10m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Recent decisions affecting current work:
 - [Phase 02-span-model]: LogEntry records tagged record_type=log_entry — additive, non-breaking change
 - [Phase 03-async-support]: Separate async_span() method (not overloading span()) keeps sync/async explicit and simple
 - [Phase 03-async-support]: ContextVar token reset in finally block of trace_async_function ensures context is always restored
+- [Phase 03-async-support]: asyncio_mode=auto in pytest config eliminates per-test @pytest.mark.asyncio boilerplate
+- [Phase 03-async-support]: LogWriter.write_span delegates to sub-writers — fixes silent span-drop when Tracer uses default LogWriter
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T20:18:10.092Z
-Stopped at: Completed 03-01-PLAN.md — Async Span Context Manager and Decorator
+Last session: 2026-03-29T20:20:22.025Z
+Stopped at: Completed 03-02-PLAN.md — Async Tracing Test Suite and Sync Regression Guard
 Resume file: None
