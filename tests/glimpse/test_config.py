@@ -625,7 +625,7 @@ class TestConfig:
     def test_class_constants(self):
         """Test that class constants are correctly defined."""
         assert Config._CORE_KEYS == {"DEST", "LEVEL", "TRACE_ID"}
-        assert Config._ACCEPTABLE_DEST == {"json", "jsonl", "sqlite", "mongo"}
+        assert Config._ACCEPTABLE_DEST == {"json", "jsonl", "sqlite", "mongo", "jaeger"}
         
         # Verify constants are used correctly for single destinations
         for dest in Config._ACCEPTABLE_DEST:
