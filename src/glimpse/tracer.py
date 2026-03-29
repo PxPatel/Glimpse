@@ -29,10 +29,13 @@ class _SpanContext:
             parent_span_id = self._context["parent_span_id"]
         else:
             parent = get_active_span()
-            trace_id = (
-                self._tracer._id_generator.get_current_trace_id()
-                or self._tracer._id_generator.new_trace_id()
-            )
+            if parent is not None:
+                trace_id = parent.trace_id
+            else:
+                trace_id = (
+                    self._tracer._id_generator.get_current_trace_id()
+                    or self._tracer._id_generator.new_trace_id()
+                )
             parent_span_id = parent.span_id if parent else None
         now = datetime.utcnow().isoformat()
         self._span = Span(
@@ -76,10 +79,13 @@ class _AsyncSpanContext:
             parent_span_id = self._context["parent_span_id"]
         else:
             parent = get_active_span()
-            trace_id = (
-                self._tracer._id_generator.get_current_trace_id()
-                or self._tracer._id_generator.new_trace_id()
-            )
+            if parent is not None:
+                trace_id = parent.trace_id
+            else:
+                trace_id = (
+                    self._tracer._id_generator.get_current_trace_id()
+                    or self._tracer._id_generator.new_trace_id()
+                )
             parent_span_id = parent.span_id if parent else None
         now = datetime.utcnow().isoformat()
         self._span = Span(
