@@ -12,6 +12,7 @@ from .writers.logwriter import LogWriter
 from .common.ids import IDGenerator
 from .span import Span, SpanEvent
 from .context import get_active_span, set_active_span, reset_active_span
+from .propagation import inject as _inject, extract as _extract
 
 
 class _SpanContext:
@@ -487,6 +488,28 @@ class Tracer:
             self._writer.write_span(span)
         except AttributeError:
             pass  # Writer doesn't support spans — silently skip
+
+    def inject(self, headers: dict) -> None:
+        """
+        Inject the active span's W3C traceparent into `headers`.
+
+        Mutates `headers` in-place. No-op when no span is active.
+        Use before making an outbound HTTP call so the downstream
+        service can continue the trace.
+        """
+        _inject(headers)
+
+    def extract(self, headers: dict):
+        """
+        Extract W3C traceparent from `headers`.
+
+        Returns a dict {"trace_id": str, "parent_span_id": str} if a
+        valid traceparent is present, otherwise None.
+        Use when receiving an inbound HTTP request to continue the
+        upstream trace: pass the returned context into tracer.span()
+        or use it to set trace_id / parent_span_id on a new Span.
+        """
+        return _extract(headers)
 
     def __enter__(self):
         """Context manager entry - start tracing."""
