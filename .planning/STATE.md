@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-01-PLAN.md — Span dataclass and ContextVar tracking
-last_updated: "2026-03-29T18:38:00.000Z"
-last_activity: 2026-03-29 -- Completed Phase 2 Plan 1
+stopped_at: Completed 02-02-PLAN.md — Context Manager and Auto-Instrumentation Integration
+last_updated: "2026-03-29T18:49:48.479Z"
+last_activity: 2026-03-29 -- Completed Plan 1 (Span dataclass + context tracking)
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
-  percent: 0
+  completed_plans: 4
+  percent: 60
 ---
 
 # Project State
@@ -70,6 +70,8 @@ Recent decisions affecting current work:
 - [Phase 01-bug-fixes]: Resource cleanup pattern: flush() then close() in stop() — always release writer handles explicitly
 - [Phase 02-01]: Span/SpanEvent are pure data containers with no methods — methods added in later plans
 - [Phase 02-01]: ContextVar token semantics used for nesting — set() returns token, reset(token) restores previous value
+- [Phase 02-02]: Class-based _SpanContext instead of @contextmanager generator for reliable token reset in __exit__
+- [Phase 02-02]: write_span no-op on BaseWriter preserves backwards compatibility with all existing writers
 
 ### Pending Todos
 
@@ -82,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T18:38:00.000Z
-Stopped at: Completed 02-01-PLAN.md — Span dataclass and ContextVar tracking
+Last session: 2026-03-29T18:49:42.051Z
+Stopped at: Completed 02-02-PLAN.md — Context Manager and Auto-Instrumentation Integration
 Resume file: None

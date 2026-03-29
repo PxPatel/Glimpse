@@ -86,6 +86,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Bug Fixes | 0/2 | Not started | - |
-| 2. Span Model | 1/3 | In Progress|  |
+| 2. Span Model | 2/3 | In Progress|  |
 | 3. Async Support | 0/? | Not started | - |
 | 4. Jaeger Export | 0/? | Not started | - |
