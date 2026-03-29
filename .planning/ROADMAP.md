@@ -16,6 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Span Model** - Introduce the Span dataclass, active context tracking, and span output (completed 2026-03-29)
 - [x] **Phase 3: Async Support** - Extend tracing to async functions and await boundaries (completed 2026-03-29)
 - [x] **Phase 4: Jaeger Export** - Export spans to a local Jaeger instance for visual trace exploration (completed 2026-03-29)
+- [ ] **Phase 5: HTTP Trace Propagation** - Inject and extract W3C traceparent headers for cross-process distributed tracing
 
 ## Phase Details
 
@@ -93,10 +94,29 @@ Wave structure:
 - Wave 1: 04-01 (JaegerWriter — no dependencies)
 - Wave 2: 04-02 (registration + packaging — depends on 04-01)
 
+### Phase 5: HTTP Trace Propagation
+**Goal:** Inject and extract W3C traceparent headers so trace context flows across HTTP service boundaries, enabling true distributed tracing across multiple processes
+**Depends on**: Phase 4
+**Requirements**: PROP-01, PROP-02
+**Success Criteria** (what must be TRUE):
+  1. `tracer.inject(headers)` adds a valid W3C `traceparent` header to the given dict using the active span's trace_id and span_id
+  2. `tracer.extract(headers)` reads a `traceparent` header and returns a dict with `trace_id` and `parent_span_id` that child spans link to
+  3. A span created after `extract()` has the remote span's trace_id and span_id as its parent_span_id — the trace is continuous across the process boundary
+  4. Both methods are no-ops / return None gracefully when no active span / no header present
+**Plans**: 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — propagation.py with inject/extract functions + Tracer.inject/extract methods + __init__ exports (PROP-01, PROP-02)
+- [ ] 05-02-PLAN.md — Test suite: inject, extract, round-trip continuity, no-op edge cases (PROP-01, PROP-02)
+
+Wave structure:
+- Wave 1: 05-01 (implementation — no dependencies)
+- Wave 2: 05-02 (tests — depends on 05-01)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -104,3 +124,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 2. Span Model | 3/3 | Complete   | 2026-03-29 |
 | 3. Async Support | 2/2 | Complete   | 2026-03-29 |
 | 4. Jaeger Export | 2/2 | Complete   | 2026-03-29 |
+| 5. HTTP Trace Propagation | 0/2 | Not started | - |
