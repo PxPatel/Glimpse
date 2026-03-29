@@ -27,13 +27,13 @@
 - [x] **ASYNC-01**: User can trace an async function with `@tracer.trace_async_function` decorator
 - [x] **ASYNC-02**: Async spans correctly propagate parent context across `await` boundaries using `ContextVar`
 - [x] **ASYNC-03**: Async context manager works (`async with tracer.span("name"):`)
-- [ ] **ASYNC-04**: Existing synchronous tracing continues to work unchanged alongside async tracing
+- [x] **ASYNC-04**: Existing synchronous tracing continues to work unchanged alongside async tracing
 
 ### Observability & Export
 
 - [ ] **OBS-01**: Spans can be exported to a local Jaeger instance via HTTP (optional dependency: `requests`)
-- [ ] **OBS-02**: User can run Glimpse with Jaeger export by installing the `jaeger` extra (`pip install glimpse[jaeger]`)
-- [ ] **OBS-03**: Jaeger export failures are logged to stderr and do not raise exceptions in user code
+- [x] **OBS-02**: User can run Glimpse with Jaeger export by installing the `jaeger` extra (`pip install glimpse[jaeger]`)
+- [x] **OBS-03**: Jaeger export failures are logged to stderr and do not raise exceptions in user code
 
 ## v2 Requirements
 
@@ -83,7 +83,7 @@ These are deferred — interesting but not needed for the core learning goals.
 | ASYNC-01 | Phase 3 | Complete |
 | ASYNC-02 | Phase 3 | Complete |
 | ASYNC-03 | Phase 3 | Complete |
-| ASYNC-04 | Phase 3 | Pending |
+| ASYNC-04 | Phase 3 | Complete |
 | OBS-01 | Phase 4 | Pending |
-| OBS-02 | Phase 4 | Pending |
-| OBS-03 | Phase 4 | Pending |
+| OBS-02 | Phase 4 | Complete |
+| OBS-03 | Phase 4 | Complete |

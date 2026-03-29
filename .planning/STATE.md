@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-01-PLAN.md — JaegerWriter OTLP HTTP Span Export
-last_updated: "2026-03-29T20:24:28.032Z"
-last_activity: 2026-03-29 -- Phase 4 execution started
+stopped_at: Completed 04-02-PLAN.md — Packaging, Registration, and Integration Tests
+last_updated: "2026-03-29T20:37:55.709Z"
+last_activity: 2026-03-29 -- Completed 04-01 JaegerWriter
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 67
 ---
 
@@ -56,6 +56,7 @@ Progress: [███████░░░] 67%
 | Phase 01-bug-fixes P02 | 3 | 2 tasks | 2 files |
 | Phase 03-async-support P01 | 10m | 2 tasks | 1 files |
 | Phase 03-async-support P02 | 10m | 2 tasks | 3 files |
+| Phase 04-jaeger-export P02 | 15 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Recent decisions affecting current work:
 - [Phase 03-async-support]: LogWriter.write_span delegates to sub-writers — fixes silent span-drop when Tracer uses default LogWriter
 
 - [Phase 04-jaeger-export]: requests imported lazily in JaegerWriter.__init__ so module-level import never fails; ImportError surfaces only on instantiation
+- [Phase 04-jaeger-export]: Added jaeger to Config._ACCEPTABLE_DEST to allow dest='jaeger' in Config constructor
+- [Phase 04-jaeger-export]: Integration tests use _initialize_destination directly with writer_initiation=False for test precision
 
 ### Pending Todos
 
@@ -94,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T20:30:00.000Z
-Stopped at: Completed 04-01-PLAN.md — JaegerWriter OTLP HTTP Span Export
+Last session: 2026-03-29T20:37:55.707Z
+Stopped at: Completed 04-02-PLAN.md — Packaging, Registration, and Integration Tests
 Resume file: None
