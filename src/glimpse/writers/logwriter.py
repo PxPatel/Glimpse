@@ -33,6 +33,14 @@ class LogWriter:
         else:
             raise ValueError(f"Unsupported log destination: {dest}")
 
+    def write_span(self, span) -> None:
+        for writer in self._writers:
+            if hasattr(writer, "write_span"):
+                try:
+                    writer.write_span(span)
+                except Exception as e:
+                    print(f"Glimpse writer error ({writer.__class__.__name__}): {e}", file=sys.stderr)
+
     def write(self, entry: LogEntry):
         for writer in self._writers:
             try:
