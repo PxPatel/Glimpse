@@ -8,6 +8,7 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio"]
 jaeger = ["requests"]
+starlette = ["starlette"]
 
 [project.scripts]
 glimpse = "glimpse.cli:main"
