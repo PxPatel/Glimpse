@@ -2,7 +2,7 @@ import sys
 import inspect
 import pprint
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
 from functools import wraps
 from datetime import datetime
 from .config import Config
@@ -16,21 +16,31 @@ from .propagation import inject as _inject, extract as _extract
 
 
 class _SpanContext:
-    def __init__(self, tracer, name: str):
+    def __init__(self, tracer, name: str, context: Optional[Dict[str, str]] = None):
         self._tracer = tracer
         self._name = name
+        self._context = context
         self._span: Optional[Span] = None
         self._token = None
 
     def __enter__(self) -> Span:
-        parent = get_active_span()
+        if self._context is not None:
+            trace_id = self._context["trace_id"]
+            parent_span_id = self._context["parent_span_id"]
+        else:
+            parent = get_active_span()
+            trace_id = (
+                self._tracer._id_generator.get_current_trace_id()
+                or self._tracer._id_generator.new_trace_id()
+            )
+            parent_span_id = parent.span_id if parent else None
         now = datetime.utcnow().isoformat()
         self._span = Span(
-            trace_id=self._tracer._id_generator.get_current_trace_id() or self._tracer._id_generator.new_trace_id(),
+            trace_id=trace_id,
             span_id=self._tracer._id_generator.new_call_id(),
             name=self._name,
             start_time=now,
-            parent_span_id=parent.span_id if parent else None,
+            parent_span_id=parent_span_id,
         )
         self._token = set_active_span(self._span)
         return self._span
@@ -53,21 +63,31 @@ class _SpanContext:
         return False  # never suppress exceptions
 
 class _AsyncSpanContext:
-    def __init__(self, tracer, name: str):
+    def __init__(self, tracer, name: str, context: Optional[Dict[str, str]] = None):
         self._tracer = tracer
         self._name = name
+        self._context = context
         self._span: Optional[Span] = None
         self._token = None
 
     async def __aenter__(self) -> Span:
-        parent = get_active_span()
+        if self._context is not None:
+            trace_id = self._context["trace_id"]
+            parent_span_id = self._context["parent_span_id"]
+        else:
+            parent = get_active_span()
+            trace_id = (
+                self._tracer._id_generator.get_current_trace_id()
+                or self._tracer._id_generator.new_trace_id()
+            )
+            parent_span_id = parent.span_id if parent else None
         now = datetime.utcnow().isoformat()
         self._span = Span(
-            trace_id=self._tracer._id_generator.get_current_trace_id() or self._tracer._id_generator.new_trace_id(),
+            trace_id=trace_id,
             span_id=self._tracer._id_generator.new_call_id(),
             name=self._name,
             start_time=now,
-            parent_span_id=parent.span_id if parent else None,
+            parent_span_id=parent_span_id,
         )
         self._token = set_active_span(self._span)
         return self._span
@@ -474,13 +494,28 @@ class Tracer:
         
         self._writer.write(log_entry)
 
-    def span(self, name: str) -> "_SpanContext":
-        """Return a context manager that creates and activates a Span."""
-        return _SpanContext(self, name)
+    def span(self, name: str, context: Optional[Dict[str, str]] = None) -> "_SpanContext":
+        """Return a context manager that creates and activates a Span.
 
-    def async_span(self, name: str) -> "_AsyncSpanContext":
-        """Return an async context manager that creates and activates a Span."""
-        return _AsyncSpanContext(self, name)
+        Args:
+            name: Span name.
+            context: Optional propagation context from tracer.extract(headers).
+                     When provided, the new span continues the remote trace
+                     (trace_id and parent_span_id are taken from context).
+                     When None (default), behaves as before — inherits from
+                     the in-process active span or starts a new trace.
+        """
+        return _SpanContext(self, name, context=context)
+
+    def async_span(self, name: str, context: Optional[Dict[str, str]] = None) -> "_AsyncSpanContext":
+        """Return an async context manager that creates and activates a Span.
+
+        Args:
+            name: Span name.
+            context: Optional propagation context from tracer.extract(headers).
+                     Same semantics as span().
+        """
+        return _AsyncSpanContext(self, name, context=context)
 
     def _on_span_end(self, span: Span) -> None:
         """Write completed span to writer if it supports spans."""
