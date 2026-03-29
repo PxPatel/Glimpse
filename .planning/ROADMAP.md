@@ -124,4 +124,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Span Model | 3/3 | Complete   | 2026-03-29 |
 | 3. Async Support | 2/2 | Complete   | 2026-03-29 |
 | 4. Jaeger Export | 2/2 | Complete   | 2026-03-29 |
-| 5. HTTP Trace Propagation | 0/2 | Not started | - |
+| 5. HTTP Trace Propagation | 1/2 | In Progress|  |

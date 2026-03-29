@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-02-PLAN.md — Packaging, Registration, and Integration Tests
-last_updated: "2026-03-29T20:37:55.709Z"
-last_activity: 2026-03-29 -- Completed 04-01 JaegerWriter
+stopped_at: Completed 05-01-PLAN.md — inject() and extract() Implementation
+last_updated: "2026-03-29T21:19:35.644Z"
+last_activity: 2026-03-29 -- Phase 5 execution started
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 11
+  completed_plans: 10
   percent: 67
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Give developers easy, low-friction visibility into Python application execution — from function-level tracing to basic distributed trace graphs — without the ceremony of a full APM setup.
-**Current focus:** Phase 4 — Jaeger Export
+**Current focus:** Phase 5 — HTTP Trace Propagation
 
 ## Current Position
 
-Phase: 4 (Jaeger Export) — EXECUTING
-Plan: 2 of 2
-Status: Executing Phase 4
-Last activity: 2026-03-29 -- Completed 04-01 JaegerWriter
+Phase: 5 (HTTP Trace Propagation) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 5
+Last activity: 2026-03-29 -- Phase 5 execution started
 
 Progress: [███████░░░] 67%
 
@@ -85,6 +85,12 @@ Recent decisions affecting current work:
 - [Phase 04-jaeger-export]: requests imported lazily in JaegerWriter.__init__ so module-level import never fails; ImportError surfaces only on instantiation
 - [Phase 04-jaeger-export]: Added jaeger to Config._ACCEPTABLE_DEST to allow dest='jaeger' in Config constructor
 - [Phase 04-jaeger-export]: Integration tests use _initialize_destination directly with writer_initiation=False for test precision
+- [Phase 05-http-trace-propagation]: propagation.py is dependency-free from Tracer — imports only context.py
+- [Phase 05-http-trace-propagation]: IDGenerator ID lengths extended to W3C spec (32-hex trace_id, 16-hex span_id) — required for valid traceparent headers
+
+### Roadmap Evolution
+
+- Phase 5 added: HTTP Trace Propagation — W3C traceparent header inject/extract for cross-process distributed tracing
 
 ### Pending Todos
 
@@ -97,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T20:37:55.707Z
-Stopped at: Completed 04-02-PLAN.md — Packaging, Registration, and Integration Tests
+Last session: 2026-03-29T21:19:31.026Z
+Stopped at: Completed 05-01-PLAN.md — inject() and extract() Implementation
 Resume file: None
