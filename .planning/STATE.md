@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-01-PLAN.md — inject() and extract() Implementation
-last_updated: "2026-03-29T21:19:35.644Z"
+stopped_at: Completed 05-02-PLAN.md — Propagation Test Suite
+last_updated: "2026-03-29T21:21:57.961Z"
 last_activity: 2026-03-29 -- Phase 5 execution started
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 67
 ---
 
@@ -57,6 +57,7 @@ Progress: [███████░░░] 67%
 | Phase 03-async-support P01 | 10m | 2 tasks | 1 files |
 | Phase 03-async-support P02 | 10m | 2 tasks | 3 files |
 | Phase 04-jaeger-export P02 | 15 | 2 tasks | 4 files |
+| Phase 05 P02 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,7 @@ Recent decisions affecting current work:
 - [Phase 04-jaeger-export]: Integration tests use _initialize_destination directly with writer_initiation=False for test precision
 - [Phase 05-http-trace-propagation]: propagation.py is dependency-free from Tracer — imports only context.py
 - [Phase 05-http-trace-propagation]: IDGenerator ID lengths extended to W3C spec (32-hex trace_id, 16-hex span_id) — required for valid traceparent headers
+- [Phase 05]: Tests use set_active_span/reset_active_span in try/finally for isolation
 
 ### Roadmap Evolution
 
@@ -103,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T21:19:31.026Z
-Stopped at: Completed 05-01-PLAN.md — inject() and extract() Implementation
+Last session: 2026-03-29T21:21:57.959Z
+Stopped at: Completed 05-02-PLAN.md — Propagation Test Suite
 Resume file: None

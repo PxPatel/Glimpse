@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Span Model** - Introduce the Span dataclass, active context tracking, and span output (completed 2026-03-29)
 - [x] **Phase 3: Async Support** - Extend tracing to async functions and await boundaries (completed 2026-03-29)
 - [x] **Phase 4: Jaeger Export** - Export spans to a local Jaeger instance for visual trace exploration (completed 2026-03-29)
-- [ ] **Phase 5: HTTP Trace Propagation** - Inject and extract W3C traceparent headers for cross-process distributed tracing
+- [x] **Phase 5: HTTP Trace Propagation** - Inject and extract W3C traceparent headers for cross-process distributed tracing (completed 2026-03-29)
 
 ## Phase Details
 
@@ -124,4 +124,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Span Model | 3/3 | Complete   | 2026-03-29 |
 | 3. Async Support | 2/2 | Complete   | 2026-03-29 |
 | 4. Jaeger Export | 2/2 | Complete   | 2026-03-29 |
-| 5. HTTP Trace Propagation | 1/2 | In Progress|  |
+| 5. HTTP Trace Propagation | 2/2 | Complete   | 2026-03-29 |
