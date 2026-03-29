@@ -5,11 +5,51 @@ from pathlib import Path
 from typing import Optional
 from functools import wraps
 from datetime import datetime
-from .config import Config 
+from .config import Config
 from .policy import TracingPolicy
 from .writers.logentry import LogEntry
 from .writers.logwriter import LogWriter
 from .common.ids import IDGenerator
+from .span import Span, SpanEvent
+from .context import get_active_span, set_active_span, reset_active_span
+
+
+class _SpanContext:
+    def __init__(self, tracer, name: str):
+        self._tracer = tracer
+        self._name = name
+        self._span: Optional[Span] = None
+        self._token = None
+
+    def __enter__(self) -> Span:
+        parent = get_active_span()
+        now = datetime.utcnow().isoformat()
+        self._span = Span(
+            trace_id=self._tracer._id_generator.get_current_trace_id() or self._tracer._id_generator.new_trace_id(),
+            span_id=self._tracer._id_generator.new_call_id(),
+            name=self._name,
+            start_time=now,
+            parent_span_id=parent.span_id if parent else None,
+        )
+        self._token = set_active_span(self._span)
+        return self._span
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        span = self._span
+        span.end_time = datetime.utcnow().isoformat()
+        if exc_type is not None:
+            span.status = "error"
+            span.events.append(SpanEvent(
+                name="exception",
+                timestamp=span.end_time,
+                attributes={
+                    "exception.type": exc_type.__name__,
+                    "exception.message": str(exc_val),
+                },
+            ))
+        reset_active_span(self._token)
+        self._tracer._on_span_end(span)
+        return False  # never suppress exceptions
 
 class Tracer:
     
@@ -236,6 +276,7 @@ class Tracer:
         call_id = self._id_generator.new_call_id()
         
         # Track call in stack
+        active = get_active_span()
         call_info = {
             'call_id': call_id,
             'function_name': func_name,
@@ -243,6 +284,8 @@ class Tracer:
             'qualname': f"{module_name}.{func_name}" if module_name else func_name,
             'start_time': datetime.now(),
             'frame': frame,
+            'parent_span_id': active.span_id if active else None,
+            'trace_id': (active.trace_id if active else None) or self._id_generator.get_current_trace_id(),
         }
         
         self._call_metadata[frame] = call_info
@@ -357,6 +400,17 @@ class Tracer:
         )
         
         self._writer.write(log_entry)
+
+    def span(self, name: str) -> "_SpanContext":
+        """Return a context manager that creates and activates a Span."""
+        return _SpanContext(self, name)
+
+    def _on_span_end(self, span: Span) -> None:
+        """Write completed span to writer if it supports spans."""
+        try:
+            self._writer.write_span(span)
+        except AttributeError:
+            pass  # Writer doesn't support spans — silently skip
 
     def __enter__(self):
         """Context manager entry - start tracing."""
