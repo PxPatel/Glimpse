@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Bug Fixes** - Stabilize the existing tracer so all backends work and failures are safe
 - [x] **Phase 2: Span Model** - Introduce the Span dataclass, active context tracking, and span output (completed 2026-03-29)
-- [ ] **Phase 3: Async Support** - Extend tracing to async functions and await boundaries
+- [x] **Phase 3: Async Support** - Extend tracing to async functions and await boundaries (completed 2026-03-29)
 - [ ] **Phase 4: Jaeger Export** - Export spans to a local Jaeger instance for visual trace exploration
 
 ## Phase Details
@@ -102,5 +102,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Bug Fixes | 0/2 | Not started | - |
 | 2. Span Model | 3/3 | Complete   | 2026-03-29 |
-| 3. Async Support | 1/2 | In Progress|  |
+| 3. Async Support | 2/2 | Complete   | 2026-03-29 |
 | 4. Jaeger Export | 0/2 | Not started | - |
