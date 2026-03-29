@@ -7,6 +7,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio"]
+jaeger = ["requests"]
 
 [project.scripts]
 glimpse = "glimpse.cli:main"
