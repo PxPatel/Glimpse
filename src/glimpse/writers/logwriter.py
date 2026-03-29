@@ -30,6 +30,10 @@ class LogWriter:
         elif dest == "mongo":
             pass
             # return MongoWriter(self._config)
+        elif dest == "jaeger":
+            from .jaeger import JaegerWriter
+            endpoint = self._config.params.get("jaeger_endpoint", "http://localhost:4318/v1/traces")
+            return JaegerWriter(endpoint=endpoint)
         else:
             raise ValueError(f"Unsupported log destination: {dest}")
 
