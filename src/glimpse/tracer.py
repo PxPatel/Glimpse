@@ -129,7 +129,7 @@ class Tracer:
                 return result
 
             except Exception as e:
-                exception = str(e)
+                exception_str = str(e)
                 level = self._config.level
 
                 error_log_entry = LogEntry(
@@ -141,13 +141,11 @@ class Tracer:
                     args=self._truncate(call_str),
                     stage="EXCEPTION",
                     timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                    exception=exception
+                    exception=exception_str
                 )
 
                 self._writer.write(error_log_entry)
-            
-            if exception:
-                raise Exception(exception)
+                raise
 
         return wrapper
     
@@ -181,6 +179,7 @@ class Tracer:
         self._tracing_active = False
         self._call_metadata.clear()
         self._writer.flush()
+        self._writer.close()
         print("Glimpse automatic tracing stopped.")
 
     def _trace_calls(self, frame, event, arg):

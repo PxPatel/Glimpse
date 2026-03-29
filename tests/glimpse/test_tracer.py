@@ -892,3 +892,71 @@ class TestTracer:
         
         log_entry = tracer._writer.write.call_args[0][0]
         assert log_entry.duration_ms == "150.0"  # Should be 150ms
+
+    # ======================= BUG-04: EXCEPTION RE-RAISE TESTS =======================
+
+    def test_trace_function_preserves_exception_type(self, tracer):
+        """BUG-04: A ValueError raised inside a traced function propagates as ValueError."""
+        @tracer.trace_function
+        def boom():
+            raise ValueError("original message")
+
+        with pytest.raises(ValueError):
+            boom()
+
+    def test_trace_function_preserves_exception_message(self, tracer):
+        """BUG-04: The exception original message is preserved through re-raise."""
+        @tracer.trace_function
+        def boom():
+            raise ValueError("original message")
+
+        try:
+            boom()
+        except ValueError as exc:
+            assert str(exc) == "original message"
+
+    def test_trace_function_preserves_traceback_origin(self, tracer):
+        """BUG-04: The traceback points to the original raise site, not tracer.py."""
+        @tracer.trace_function
+        def boom():
+            raise ValueError("original message")
+
+        try:
+            boom()
+        except ValueError as exc:
+            import traceback as tb_mod
+            import os
+            tb_frames = tb_mod.extract_tb(exc.__traceback__)
+            # The last frame must come from the user's function (boom), not from glimpse/tracer.py
+            last_frame = tb_frames[-1]
+            tracer_module_path = os.path.join("glimpse", "tracer.py")
+            assert tracer_module_path not in last_frame.filename
+
+    def test_trace_function_does_not_wrap_in_plain_exception(self, tracer):
+        """BUG-04: Exception type must not be the generic Exception class."""
+        @tracer.trace_function
+        def boom():
+            raise TypeError("type error message")
+
+        try:
+            boom()
+            assert False, "Expected TypeError to propagate"
+        except TypeError:
+            pass  # Correct — original type preserved
+        except Exception as exc:
+            assert False, f"Expected TypeError but got {type(exc).__name__}: {exc}"
+
+    def test_trace_function_still_writes_exception_log_entry(self, tracer):
+        """BUG-04: EXCEPTION LogEntry must still be written even after fix."""
+        @tracer.trace_function
+        def boom():
+            raise ValueError("original message")
+
+        with pytest.raises(ValueError):
+            boom()
+
+        # Writer should have been called twice: START and EXCEPTION
+        assert tracer._writer.write.call_count == 2
+        exception_entry = tracer._writer.write.call_args_list[1][0][0]
+        assert exception_entry.stage == "EXCEPTION"
+        assert "original message" in exception_entry.exception
