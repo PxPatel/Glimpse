@@ -35,7 +35,6 @@ Plans:
 - [x] 01-02-PLAN.md — Fix resource leak on stop() (BUG-03) and exception re-raise destroying traceback (BUG-04) in tracer.py
 
 ### Phase 2: Span Model
-**Goal**: Glimpse has a first-class Span data model with parent/child relationships, and users can create spans manually with a context manager
 **Depends on**: Phase 1
 **Requirements**: SPAN-01, SPAN-02, SPAN-03, SPAN-04, SPAN-05, SPAN-06
 **Success Criteria** (what must be TRUE):
@@ -63,10 +62,18 @@ Wave structure:
 **Requirements**: ASYNC-01, ASYNC-02, ASYNC-03, ASYNC-04
 **Success Criteria** (what must be TRUE):
   1. Decorating an async function with `@tracer.trace_async_function` produces a span for each call, visible in JSON output
-  2. An `async with tracer.span("name"):` block creates and closes a span correctly in an async context
+  2. An `async with tracer.async_span("name"):` block creates and closes a span correctly in an async context
   3. Parent span context established before an `await` is still the active parent when execution resumes after the `await`
   4. Existing synchronous tracing tests pass unchanged after async support is added
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — `_AsyncSpanContext` class + `async_span()` method + `trace_async_function` decorator in tracer.py (ASYNC-01, ASYNC-02, ASYNC-03)
+- [ ] 03-02-PLAN.md — Async tracing test suite + pytest-asyncio setup + sync regression guard (ASYNC-01, ASYNC-02, ASYNC-03, ASYNC-04)
+
+Wave structure:
+- Wave 1: 03-01 (implementation — no dependencies within phase)
+- Wave 2: 03-02 (tests — depends on 03-01)
 
 ### Phase 4: Jaeger Export
 **Goal**: Completed spans can be sent to a local Jaeger instance and appear as visual trace graphs in the Jaeger UI
@@ -76,7 +83,15 @@ Wave structure:
   1. A trace created with `with tracer.span("root"):` appears in the Jaeger UI at `http://localhost:16686` after the program runs
   2. Installing `glimpse[jaeger]` is sufficient to enable Jaeger export; no manual dependency installation needed
   3. When the Jaeger endpoint is unreachable, the error is logged to stderr and the traced program continues without raising an exception
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — JaegerWriter class with OTLP HTTP export and stderr error handling (OBS-01, OBS-03)
+- [ ] 04-02-PLAN.md — pyproject.toml jaeger extra, LogWriter registration, write_span fan-out, integration tests (OBS-02, OBS-03)
+
+Wave structure:
+- Wave 1: 04-01 (JaegerWriter — no dependencies)
+- Wave 2: 04-02 (registration + packaging — depends on 04-01)
 
 ## Progress
 
@@ -87,5 +102,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Bug Fixes | 0/2 | Not started | - |
 | 2. Span Model | 3/3 | Complete   | 2026-03-29 |
-| 3. Async Support | 0/? | Not started | - |
-| 4. Jaeger Export | 0/? | Not started | - |
+| 3. Async Support | 1/2 | In Progress|  |
+| 4. Jaeger Export | 0/2 | Not started | - |

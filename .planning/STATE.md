@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-03-PLAN.md — JSON Writer Span Output
-last_updated: "2026-03-29T19:03:40.220Z"
-last_activity: 2026-03-29 -- Completed Plan 1 (Span dataclass + context tracking)
+stopped_at: Completed 03-01-PLAN.md — Async Span Context Manager and Decorator
+last_updated: "2026-03-29T20:18:10.095Z"
+last_activity: 2026-03-29 -- Phase 3 execution started
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 9
+  completed_plans: 6
   percent: 60
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Give developers easy, low-friction visibility into Python application execution — from function-level tracing to basic distributed trace graphs — without the ceremony of a full APM setup.
-**Current focus:** Phase 2 — Span Model
+**Current focus:** Phase 3 — Async Support
 
 ## Current Position
 
-Phase: 2 (Span Model) — EXECUTING
-Plan: 2 of 3
-Status: Executing Phase 2
-Last activity: 2026-03-29 -- Completed Plan 1 (Span dataclass + context tracking)
+Phase: 3 (Async Support) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 3
+Last activity: 2026-03-29 -- Phase 3 execution started
 
 Progress: [██████░░░░] 60%
 
@@ -54,6 +54,7 @@ Progress: [██████░░░░] 60%
 *Updated after each plan completion*
 | Phase 01-bug-fixes P01 | 3 | 2 tasks | 3 files |
 | Phase 01-bug-fixes P02 | 3 | 2 tasks | 2 files |
+| Phase 03-async-support P01 | 10m | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 02-02]: write_span no-op on BaseWriter preserves backwards compatibility with all existing writers
 - [Phase 02-span-model]: dataclasses.asdict used in JSONWriter for recursive nested serialization of SpanEvent inside Span.events
 - [Phase 02-span-model]: LogEntry records tagged record_type=log_entry — additive, non-breaking change
+- [Phase 03-async-support]: Separate async_span() method (not overloading span()) keeps sync/async explicit and simple
+- [Phase 03-async-support]: ContextVar token reset in finally block of trace_async_function ensures context is always restored
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T19:03:32.855Z
-Stopped at: Completed 02-03-PLAN.md — JSON Writer Span Output
+Last session: 2026-03-29T20:18:10.092Z
+Stopped at: Completed 03-01-PLAN.md — Async Span Context Manager and Decorator
 Resume file: None
