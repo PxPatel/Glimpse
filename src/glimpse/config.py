@@ -46,7 +46,7 @@ load_env_files()
 
 class Config:
     _CORE_KEYS = {"DEST", "LEVEL", "TRACE_ID"}
-    _ACCEPTABLE_DEST = {"json", "jsonl", "sqlite", "mongo"}
+    _ACCEPTABLE_DEST = {"json", "jsonl", "sqlite", "mongo", "jaeger"}
 
     def __init__(
         self,
