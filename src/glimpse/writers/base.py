@@ -28,3 +28,7 @@ class BaseWriter(ABC):
         Override if needed.
         """
         pass
+
+    def write_span(self, span) -> None:
+        """Write a completed Span. Override in writers that support span output."""
+        pass  # default: no-op (backwards compatible)
