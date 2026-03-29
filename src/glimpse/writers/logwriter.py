@@ -1,3 +1,5 @@
+import sys
+
 from ..config import Config
 from .logentry import LogEntry
 from .json import JSONWriter
@@ -21,7 +23,7 @@ class LogWriter:
     def _initialize_destination(self, dest):
         dest = dest.lower()
 
-        if dest == "sqllite":
+        if dest == "sqlite":
             return SQLiteWriter(self._config)
         elif dest == "jsonl" or dest == "json":
             return JSONWriter(self._config)
@@ -33,12 +35,18 @@ class LogWriter:
 
     def write(self, entry: LogEntry):
         for writer in self._writers:
-            writer.write(entry)
+            try:
+                writer.write(entry)
+            except Exception as e:
+                print(f"Glimpse writer error ({writer.__class__.__name__}): {e}", file=sys.stderr)
 
     def flush(self):
         for writer in self._writers:
             if hasattr(writer, "flush"):
-                writer.flush()
+                try:
+                    writer.flush()
+                except Exception as e:
+                    print(f"Glimpse flush error ({writer.__class__.__name__}): {e}", file=sys.stderr)
 
     def close(self):
         for writer in self._writers:
