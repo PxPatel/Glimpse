@@ -48,6 +48,8 @@ These are deferred — interesting but not needed for the core learning goals.
 
 - **PROP-01**: Tracer can inject trace context into a dict/HTTP headers for cross-service propagation
 - **PROP-02**: Tracer can extract trace context from incoming dict/HTTP headers to continue a distributed trace
+- **PROP-03**: `tracer.span("name", context=ctx)` accepts extracted propagation context and automatically links the span to the remote parent (backward compatible — context is optional)
+- **PROP-04**: FastAPI/Starlette middleware automatically extracts traceparent from incoming requests and sets up the active span context for the duration of the request
 
 ### PII Protection
 
@@ -84,6 +86,8 @@ These are deferred — interesting but not needed for the core learning goals.
 | ASYNC-02 | Phase 3 | Complete |
 | ASYNC-03 | Phase 3 | Complete |
 | ASYNC-04 | Phase 3 | Complete |
-| OBS-01 | Phase 4 | Pending |
+| OBS-01 | Phase 4 | Complete |
 | OBS-02 | Phase 4 | Complete |
 | OBS-03 | Phase 4 | Complete |
+| PROP-01 | Phase 5 | Complete |
+| PROP-02 | Phase 5 | Complete |

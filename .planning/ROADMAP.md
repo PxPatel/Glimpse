@@ -113,10 +113,27 @@ Wave structure:
 - Wave 1: 05-01 (implementation — no dependencies)
 - Wave 2: 05-02 (tests — depends on 05-01)
 
+### Phase 6: Context-aware span API and HTTP middleware
+
+**Goal:** `tracer.span()` accepts extracted propagation context for automatic remote parent linking, and a FastAPI/Starlette middleware handles traceparent extraction automatically — no manual header handling in handlers
+**Requirements**: PROP-03, PROP-04
+**Depends on:** Phase 5
+**Plans:** 3 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Add `context` parameter to `_SpanContext`, `_AsyncSpanContext`, `tracer.span()`, `tracer.async_span()` (PROP-03)
+- [ ] 06-02-PLAN.md — `GlimpseMiddleware` for FastAPI/Starlette in `src/glimpse/middleware.py` + `pyproject.toml` starlette extra (PROP-04)
+- [ ] 06-03-PLAN.md — Tests: context parameter unit tests + middleware integration tests with Starlette TestClient (PROP-03, PROP-04)
+
+Wave structure:
+- Wave 1: 06-01 (context parameter — no dependencies within phase)
+- Wave 2: 06-02 (middleware — depends on 06-01 for async_span context kwarg)
+- Wave 3: 06-03 (tests — depends on 06-01 and 06-02)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -125,3 +142,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Async Support | 2/2 | Complete   | 2026-03-29 |
 | 4. Jaeger Export | 2/2 | Complete   | 2026-03-29 |
 | 5. HTTP Trace Propagation | 2/2 | Complete   | 2026-03-29 |
+| 6. Context-aware span API and HTTP middleware | 0/3 | Not started | - |

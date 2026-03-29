@@ -4,12 +4,12 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 05-02-PLAN.md — Propagation Test Suite
-last_updated: "2026-03-29T21:21:57.961Z"
-last_activity: 2026-03-29 -- Phase 5 execution started
+last_updated: "2026-03-29T22:31:46.186Z"
+last_activity: 2026-03-29 -- Phase 6 execution started
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
-  total_plans: 11
+  total_plans: 14
   completed_plans: 11
   percent: 67
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Give developers easy, low-friction visibility into Python application execution — from function-level tracing to basic distributed trace graphs — without the ceremony of a full APM setup.
-**Current focus:** Phase 5 — HTTP Trace Propagation
+**Current focus:** Phase 6 — Context-aware span API and HTTP middleware
 
 ## Current Position
 
-Phase: 5 (HTTP Trace Propagation) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 5
-Last activity: 2026-03-29 -- Phase 5 execution started
+Phase: 6 (Context-aware span API and HTTP middleware) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 6
+Last activity: 2026-03-29 -- Phase 6 execution started
 
 Progress: [███████░░░] 67%
 
@@ -93,6 +93,7 @@ Recent decisions affecting current work:
 ### Roadmap Evolution
 
 - Phase 5 added: HTTP Trace Propagation — W3C traceparent header inject/extract for cross-process distributed tracing
+- Phase 6 added: Context-aware span API and HTTP middleware — tracer.span(context=) + FastAPI/Starlette automatic middleware
 
 ### Pending Todos
 
