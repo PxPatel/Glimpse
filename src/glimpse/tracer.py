@@ -51,6 +51,44 @@ class _SpanContext:
         self._tracer._on_span_end(span)
         return False  # never suppress exceptions
 
+class _AsyncSpanContext:
+    def __init__(self, tracer, name: str):
+        self._tracer = tracer
+        self._name = name
+        self._span: Optional[Span] = None
+        self._token = None
+
+    async def __aenter__(self) -> Span:
+        parent = get_active_span()
+        now = datetime.utcnow().isoformat()
+        self._span = Span(
+            trace_id=self._tracer._id_generator.get_current_trace_id() or self._tracer._id_generator.new_trace_id(),
+            span_id=self._tracer._id_generator.new_call_id(),
+            name=self._name,
+            start_time=now,
+            parent_span_id=parent.span_id if parent else None,
+        )
+        self._token = set_active_span(self._span)
+        return self._span
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        span = self._span
+        span.end_time = datetime.utcnow().isoformat()
+        if exc_type is not None:
+            span.status = "error"
+            span.events.append(SpanEvent(
+                name="exception",
+                timestamp=span.end_time,
+                attributes={
+                    "exception.type": exc_type.__name__,
+                    "exception.message": str(exc_val),
+                },
+            ))
+        reset_active_span(self._token)
+        self._tracer._on_span_end(span)
+        return False
+
+
 class Tracer:
     
     def __init__(self, config: Config, writer_initiation = True, policy: TracingPolicy = None):
@@ -188,7 +226,41 @@ class Tracer:
                 raise
 
         return wrapper
-    
+
+    def trace_async_function(self, func):
+        """Decorator for async functions. Produces a span for each call."""
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            parent = get_active_span()
+            now = datetime.utcnow().isoformat()
+            span = Span(
+                trace_id=self._id_generator.get_current_trace_id() or self._id_generator.new_trace_id(),
+                span_id=self._id_generator.new_call_id(),
+                name=func.__qualname__,
+                start_time=now,
+                parent_span_id=parent.span_id if parent else None,
+            )
+            token = set_active_span(span)
+            try:
+                result = await func(*args, **kwargs)
+                span.end_time = datetime.utcnow().isoformat()
+                return result
+            except Exception as exc:
+                span.end_time = datetime.utcnow().isoformat()
+                span.status = "error"
+                span.events.append(SpanEvent(
+                    name="exception",
+                    timestamp=span.end_time,
+                    attributes={
+                        "exception.type": type(exc).__name__,
+                        "exception.message": str(exc),
+                    },
+                ))
+                raise
+            finally:
+                reset_active_span(token)
+                self._on_span_end(span)
+        return wrapper
 
     def _truncate(self, value: str) -> str:
         max_len = self._config.max_field_length
@@ -404,6 +476,10 @@ class Tracer:
     def span(self, name: str) -> "_SpanContext":
         """Return a context manager that creates and activates a Span."""
         return _SpanContext(self, name)
+
+    def async_span(self, name: str) -> "_AsyncSpanContext":
+        """Return an async context manager that creates and activates a Span."""
+        return _AsyncSpanContext(self, name)
 
     def _on_span_end(self, span: Span) -> None:
         """Write completed span to writer if it supports spans."""
