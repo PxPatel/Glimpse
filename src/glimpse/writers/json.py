@@ -1,3 +1,4 @@
+import dataclasses
 import json
 from pathlib import Path
 from typing import Any, TextIO
@@ -14,14 +15,24 @@ class JSONWriter(BaseWriter):
         self._file: TextIO = open(self._path, mode="a", encoding="utf-8")
 
     def write(self, entry: Any) -> None:
-        # Convert to dict if it's a dataclass (like LogEntry)
-        if hasattr(entry, "__dict__"):
-            entry = entry.__dict__
-        elif not isinstance(entry, dict):
+        if dataclasses.is_dataclass(entry) and not isinstance(entry, type):
+            d = dataclasses.asdict(entry)
+            # Tag the record type so consumers can distinguish spans from log entries
+            from ..span import Span  # local import to avoid circular at module level
+            if isinstance(entry, Span):
+                d["record_type"] = "span"
+            else:
+                d["record_type"] = "log_entry"
+        elif isinstance(entry, dict):
+            d = entry
+        else:
             raise TypeError("Log entry must be a dict or dataclass")
 
-        json_line = json.dumps(entry, ensure_ascii=False)
+        json_line = json.dumps(d, ensure_ascii=False, default=str)
         self._file.write(json_line + "\n")
+
+    def write_span(self, span) -> None:
+        self.write(span)
 
     def flush(self) -> None:
         self._file.flush()
