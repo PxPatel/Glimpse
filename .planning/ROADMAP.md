@@ -86,7 +86,7 @@ Wave structure:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — JaegerWriter class with OTLP HTTP export and stderr error handling (OBS-01, OBS-03)
+- [x] 04-01-PLAN.md — JaegerWriter class with OTLP HTTP export and stderr error handling (OBS-01, OBS-03)
 - [ ] 04-02-PLAN.md — pyproject.toml jaeger extra, LogWriter registration, write_span fan-out, integration tests (OBS-02, OBS-03)
 
 Wave structure:
@@ -103,4 +103,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Bug Fixes | 0/2 | Not started | - |
 | 2. Span Model | 3/3 | Complete   | 2026-03-29 |
 | 3. Async Support | 2/2 | Complete   | 2026-03-29 |
-| 4. Jaeger Export | 0/2 | Not started | - |
+| 4. Jaeger Export | 1/2 | Executing | - |
