@@ -1,390 +1,221 @@
-# 🔍 Glimpse
+# Glimpse
 
-**Function-level logging and tracing for Python applications.**
+**Function-level logging and tracing for Python.**
 
-Glimpse automatically captures your application's execution flow, giving you detailed insights into function calls, performance, and errors. Think of it as a microscope for your code - see exactly what's happening, when, and why.
+Inspired by **OpenTelemetry** and **Datadog**—this is a small, from-scratch take on traces and spans. Built to learn how the pieces fit together.
 
-Built by developers, for developers who need to understand their code better.
-
----
-
-## ✨ Why Glimpse?
-
-**Get visibility into your application without changing your code.** Glimpse automatically traces function execution, captures arguments and return values, and logs everything to your preferred storage backend.
-
-Perfect for debugging complex applications, performance analysis, and understanding code flow in production systems.
-
-**Key Benefits:**
-
-- 🚀 **Zero-code tracing** - Just run `tracer.run()` and see everything
-- 🎯 **Smart filtering** - Only trace what matters with flexible policies
-- 📊 **Multiple backends** - Store traces in JSON, JSONL, SQLite, or build your own
-- ⚡ **Performance optimized** - Minimal overhead, designed for production use
-- 🔧 **Developer friendly** - Simple setup, clear output, easy integration
+**Capabilities:** policy-driven tracing via `sys.settrace`, manual spans (JSONL / SQLite / **Jaeger** OTLP), W3C **`traceparent`** inject/extract, and optional **Starlette/FastAPI** middleware for a root span per request.
 
 ---
 
-## 🚀 Quick Start
+## What’s in the box
 
-### Installation
+A short overview of what the library implements:
+
+- Automatic tracing — `tracer.run()` instruments calls that match your policy (no per-function decorators required).
+- Spans — `span()` / `async_span()` blocks with active-span context, parent IDs, and export where supported (including OTLP to Jaeger).
+- Header propagation — inject/extract W3C `traceparent`; optional ASGI middleware attaches inbound headers to handler spans.
+- Outputs — JSON/JSONL, SQLite, and Jaeger; you can combine destinations.
+- Async — `trace_async_function` and async span context managers use `contextvars` for nesting.
+
+---
+
+## Installation
+
+From the project / PyPI package name in `pyproject.toml`:
 
 ```bash
-pip install glimpse-py
+pip install glimpse
 ```
 
-### 30-Second Example
+Optional extras:
+
+```bash
+pip install glimpse[jaeger]      # OTLP HTTP export to Jaeger (needs `requests`)
+pip install glimpse[starlette]   # ASGI middleware (Starlette/FastAPI)
+pip install glimpse[dev]        # pytest, pytest-asyncio (for contributors)
+```
+
+Editable install for development:
+
+```bash
+pip install -e ".[dev,jaeger,starlette]"
+```
+
+`glimpse.config` uses **`python-dotenv`** to load `.env` files. If you install from source, ensure `python-dotenv` is available (it should be listed as a runtime dependency in published packages).
+
+---
+
+## Quick start
 
 ```python
 from glimpse.tracer import Tracer
 from glimpse.config import Config
 from glimpse.policy import TracingPolicy
 
-# Configure what to trace
-config = Config(dest="jsonl", level="INFO")
+config = Config(dest="jsonl", level="INFO", params={"log_path": "traces.jsonl"})
 policy = TracingPolicy(exact_modules=["myapp"], package_trees=["myapp.services"])
 
-# Start automatic tracing
 tracer = Tracer(config, policy=policy)
 tracer.run()
 
-# Your code runs here - everything gets traced automatically
-def calculate_total(items):
-    return sum(item.price for item in items)
-
-result = calculate_total(shopping_cart)
+# Your application code runs here; matching calls are traced automatically.
 
 tracer.stop()
 ```
 
-**That's it!** Every function call matching your policy is now logged with timing, arguments, and results.
+Use a **policy** whenever you call `run()` (automatic tracing). For manual spans only, you can still construct `Tracer` with a config and use `span()` / `async_span()` without `run()`.
 
 ---
 
-## 🛠️ Core Features
+## Core features
 
-### Automatic Function Tracing
+### Automatic tracing (`sys.settrace`)
 
-**Trace all function calls without decorators.** Just call `tracer.run()` and Glimpse automatically captures execution flow based on your policy.
+`tracer.run()` / `tracer.stop()` enable call-level logging for modules matched by `TracingPolicy` (depth limits, exact modules vs package trees, wildcards — unchanged from the policy model).
+
+### Decorators
+
+- **`@tracer.trace_function`** — Sync functions: classic START/END/EXCEPTION log lines with timing.
+- **`@tracer.trace_async_function`** — Async functions: creates a **span** per invocation, nested under the active span when present.
+
+### Spans (`Span`, `SpanEvent`)
+
+Spans carry `trace_id`, `span_id`, optional `parent_span_id`, timing, status, attributes, and events (e.g. exceptions). The active span is stored in a **context variable** (`get_active_span` / `set_active_span` / `reset_active_span`).
 
 ```python
-# Traces everything matching your policy
-tracer.run()
-your_application_code()
-tracer.stop()
+with tracer.span("checkout"):
+    with tracer.span("validate_cart"):
+        ...
+# Completed spans are passed to writers that support `write_span` (e.g. JSONL, Jaeger).
 ```
 
-### Manual Decorators
-
-**Fine-grained control for specific functions.** Use decorators when you want explicit tracing of important functions.
+Async equivalent:
 
 ```python
-@tracer.trace_function
-def critical_function(data):
-    # This function will always be traced
-    return process_data(data)
+async with tracer.async_span("fetch_user"):
+    ...
 ```
 
-### Multiple Storage Backends
+### Distributed tracing (W3C traceparent)
 
-**Store traces wherever you need them.** Built-in support for JSON, JSONL, and SQLite.
+Module `glimpse.propagation` (re-exported from `glimpse`) implements:
+
+- **`inject(headers)`** — Adds `traceparent` from the active span (mutates `headers` in place).
+- **`extract(headers)`** — Returns `{"trace_id", "parent_span_id"}` or `None`.
+
+On **`Tracer`**, use `tracer.inject(...)` and `tracer.extract(...)` for the same behavior.
+
+Continue a remote trace in a manual span:
 
 ```python
-from glimpse.config import Config
-
-# JSON Lines (great for log analysis)
-config = Config(dest="jsonl", params={"log_path": "/var/logs/traces.jsonl"})
-
-# SQLite (great for local development and analysis)
-config = Config(dest="sqlite", params={"db_path": "traces.db"})
-
-# Multiple destinations simultaneously
-config = Config(dest=["jsonl", "sqlite"])
+ctx = tracer.extract(incoming_headers)  # dict-like, e.g. request headers
+with tracer.span("handle_request", context=ctx):
+    ...
 ```
 
-### Smart Policy System
+### Starlette / FastAPI middleware (optional)
 
-**Control exactly what gets traced.** Use JSON policies to include/exclude packages with powerful pattern matching.
+With `glimpse[starlette]`, wrap the app so each request runs inside `async_span` and **extracts** `traceparent` automatically:
 
 ```python
-from glimpse.policy import TracingPolicy
+from glimpse.middleware import GlimpseMiddleware
 
-# Programmatic policy creation
-policy = TracingPolicy(
-    exact_modules=["myapp.utils", "requests"],  # Exact module matches only
-    package_trees=["myapp.services"],           # Package + all submodules
-    trace_depth=10                              # Prevent infinite recursion
-)
-
-# Load from JSON file
-policy = TracingPolicy.load("my-custom-policy.json")
-
-# Auto-discover policy file
-policy = TracingPolicy.load()  # Finds closest glimpse-policy.json
+app.add_middleware(GlimpseMiddleware, tracer=tracer)
 ```
 
-### Context Manager Support
+Handlers can nest `tracer.span(...)` without copying headers by hand.
 
-**Clean, Pythonic usage.** Automatically start and stop tracing with context managers.
+### Storage backends
+
+| Destination | Role |
+|-------------|------|
+| `json` / `jsonl` | Append JSON lines; log lines and spans include a `record_type` field (`log_entry` vs `span`). |
+| `sqlite` | Function-call log entries (schema oriented to `LogEntry`). |
+| `jaeger` | OTLP HTTP JSON to a collector (default `http://localhost:4318/v1/traces`); requires `glimpse[jaeger]`. |
+
+Multiple destinations:
 
 ```python
-with Tracer(config, policy=policy):
-    # Tracing active only in this block
-    run_my_application()
-# Tracing automatically stops and cleans up
+config = Config(dest=["jsonl", "jaeger"], params={
+    "log_path": "out.jsonl",
+    "jaeger_endpoint": "http://localhost:4318/v1/traces",
+})
 ```
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
-### Basic Configuration
+`Config` accepts destinations, level, trace IDs, path params, truncation, and env overrides. On import, it attempts to load **`.env`** / **`.env.<env>`** (see `config.py`) so variables like `GLIMPSE_DEST` can live in env files.
 
-**Configure storage, log levels, and output format.** Settings can be provided via constructor or environment variables.
+Common constructor options:
 
 ```python
-from glimpse.config import Config
-
-# Constructor approach
 config = Config(
-    dest="jsonl",              # Storage backend: jsonl, json, sqlite
-    level="INFO",              # Log level
-    enable_trace_id=True,      # Enable trace correlation
-    params={"log_path": "/var/logs/traces.jsonl"},
-    max_field_length=512       # Truncate long values
-)
-
-# Environment variable approach
-# GLIMPSE_DEST=jsonl
-# GLIMPSE_LEVEL=DEBUG
-# GLIMPSE_LOG_PATH=/var/logs/traces.jsonl
-config = Config()  # Automatically loads from environment
-```
-
-### Environment Variables
-
-All configuration can be controlled via environment variables:
-
-| Variable           | Description                       | Default         |
-| ------------------ | --------------------------------- | --------------- |
-| `GLIMPSE_DEST`     | Storage backend (jsonl, sqlite)  | `jsonl`         |
-| `GLIMPSE_LEVEL`    | Log level (INFO, DEBUG, ERROR)   | `INFO`          |
-| `GLIMPSE_LOG_PATH` | Path to log file                  | `glimpse.jsonl` |
-| `GLIMPSE_TRACE_ID` | Enable trace correlation          | `false`         |
-
----
-
-## 📋 Policy System
-
-### Policy Files
-
-**Control tracing behavior with JSON policies.** Create policy files to define what gets traced.
-
-```json
-{
-    "version": "1.0",
-    "name": "my_policy",
-    "exact_modules": ["mylib", "requests"],
-    "package_trees": ["myapp", "services"],
-    "trace_depth": 5
-}
-```
-
-### Policy Types
-
-**Two distinct filtering approaches for maximum flexibility:**
-
-- **`exact_modules`**: Match only the exact module names specified (no submodules)
-- **`package_trees`**: Match the package and ALL its submodules
-
-```python
-from glimpse.policy import TracingPolicy
-
-policy = TracingPolicy(
-    exact_modules=["requests", "urllib3"],        # Only these exact modules
-    package_trees=["myapp", "services"],         # These packages + submodules
-    trace_depth=10
+    dest=["jsonl", "sqlite"],
+    level="INFO",
+    enable_trace_id=True,
+    params={"log_path": "traces.jsonl", "db_path": "traces.db"},
+    max_field_length=512,
 )
 ```
 
-### Wildcard Patterns
+### Environment variables
 
-**Use powerful patterns to match modules.** Support for shell-style wildcards:
+| Variable | Description |
+|----------|-------------|
+| `GLIMPSE_DEST` | Comma-separated list: `json`, `jsonl`, `sqlite`, `jaeger` (others in config may be reserved for future use). |
+| `GLIMPSE_LEVEL` | e.g. `INFO`, `DEBUG`. |
+| `GLIMPSE_TRACE_ID` | Truthy values enable trace correlation on log entries when applicable. |
+| `GLIMPSE_*` | Non-core suffixes are folded into `params` (lower snake case), e.g. `GLIMPSE_LOG_PATH`, `GLIMPSE_JAEGER_ENDPOINT`. |
+
+---
+
+## Policy files
+
+Policies still use `TracingPolicy` and optional `glimpse-policy.json` discovery. Example:
 
 ```json
 {
-    "exact_modules": [
-        "api_v*",          // Matches: api_v1, api_v2, api_version_new
-        "test_*_utils",    // Matches: test_unit_utils, test_integration_utils
-        "config[12]"       // Matches: config1, config2
-    ],
-    "package_trees": [
-        "myapp.*",         // Matches: myapp.services, myapp.utils, etc.
-        "*.models"         // Matches: core.models, user.models, etc.
-    ]
+  "version": "1.0",
+  "name": "my_policy",
+  "exact_modules": ["mylib", "requests"],
+  "package_trees": ["myapp", "services"],
+  "trace_depth": 5
 }
 ```
 
-### Policy Discovery
-
-**Automatic policy discovery.** Glimpse walks up your directory tree to find the closest policy file.
-
-```python
-# Auto-discover from caller location
-policy = TracingPolicy.load()
-
-# Explicit path (must be named 'glimpse-policy.json')
-policy = TracingPolicy.load("/path/to/glimpse-policy.json")
-```
-
-```
-myproject/
-├── glimpse-policy.json     # Found and used automatically
-├── src/
-│   └── myapp/
-│       └── main.py         # TracingPolicy.load() called here
-└── tests/
-```
+Use `exact_modules` for exact module names only; `package_trees` for a package and its submodules. Wildcards are supported as documented in code/tests.
 
 ---
 
-## 📊 Output Examples
+## Output examples
 
-### JSONL Output
+### JSONL log lines (function tracing)
 
-**Each function call produces a structured log entry.** Easy to analyze with standard tools like `jq`, ELK stack, or pandas.
+Structured one JSON object per line with `stage` `START` / `END` / `EXCEPTION`, timing, etc.
 
-```json
-{"entry_id": "1234-a1b2c3d4-000001", "call_id": "abc123def456", "trace_id": "xyz789uvw012", "level": "INFO", "function": "myapp.services.get_user", "args": "get_user(user_id=123)", "stage": "START", "timestamp": "2023-12-01 10:30:15.123456"}
-{"entry_id": "1234-a1b2c3d4-000002", "call_id": "abc123def456", "trace_id": "xyz789uvw012", "level": "INFO", "function": "myapp.services.get_user", "args": "get_user", "stage": "END", "result": "User(id=123, name='John')", "timestamp": "2023-12-01 10:30:15.145223", "duration_ms": "21.767"}
-```
+### JSONL spans
 
-### SQLite Output
+Span records include `record_type: "span"` plus span fields (`trace_id`, `span_id`, `parent_span_id`, times, `status`, `events`, …).
 
-**Structured database storage for complex analysis.** Query your traces with SQL for powerful insights.
+### SQLite
 
-```sql
--- Find slow functions
-SELECT function, AVG(duration_ms) as avg_duration 
-FROM trace_entries 
-WHERE stage = 'END' 
-GROUP BY function 
-ORDER BY avg_duration DESC;
-
--- Find error patterns
-SELECT function, COUNT(*) as error_count 
-FROM trace_entries 
-WHERE stage = 'EXCEPTION' 
-GROUP BY function;
-
--- Trace correlation by call_id
-SELECT * FROM trace_entries 
-WHERE call_id = 'abc123def456' 
-ORDER BY timestamp;
-```
-
-### Trace Analysis
-
-**Easily analyze execution patterns:**
-
-```bash
-# Find slow functions (JSONL)
-cat traces.jsonl | jq 'select(.duration_ms > 100)'
-
-# Count function calls
-cat traces.jsonl | jq '.function' | sort | uniq -c
-
-# Find errors
-cat traces.jsonl | jq 'select(.stage == "EXCEPTION")'
-
-# Trace specific call flow
-cat traces.jsonl | jq 'select(.call_id == "abc123def456")'
-```
+SQL-friendly tables for **log entries** — useful for ad hoc queries on function-level traces (see writer schema in `writers/sqlite.py`).
 
 ---
 
-## 🏗️ Architecture
-
-### High-Level Design
-
-**Modular architecture designed for extensibility.** Each component has a single responsibility and can be extended or replaced.
+## Architecture (conceptual)
 
 ```
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐
-│   Tracer    │───▶│    Policy    │───▶│   Writer    │
-│             │    │              │    │             │
-│ • Manual    │    │ • Exact Mods │    │ • JSON      │
-│ • Automatic │    │ • Pkg Trees  │    │ • JSONL     │
-│ • Context   │    │ • Wildcards  │    │ • SQLite    │
-└─────────────┘    └──────────────┘    └─────────────┘
+Tracer ──► TracingPolicy ──► LogWriter ──► JSONWriter / SQLiteWriter / JaegerWriter
+   │                            │
+   │                            └── write_span(Span) where supported
+   ├── span() / async_span()  ──► active span (contextvars)
+   └── inject / extract       ──► W3C traceparent
 ```
 
-### Component Overview
-
-- **Tracer**: Core tracing engine using `sys.settrace()`
-- **TracingPolicy**: Smart filtering with exact modules vs package trees
-- **Config**: Environment-aware configuration management
-- **Writers**: Pluggable storage backends (JSON, JSONL, SQLite)
-- **LogEntry**: Structured trace data model with correlation IDs
-- **IDGenerator**: Thread-safe ID generation for tracing correlation
-
-### Performance Characteristics
-
-**Designed for production use.** Optimized hot paths, minimal overhead, and efficient pattern matching.
-
-- ⚡ **Efficient pattern matching** using tries and sets
-- 🎯 **Smart filtering** to avoid tracing unnecessary code
-- 📊 **Configurable depth limits** to prevent runaway traces
-- 🔧 **Self-filtering** to avoid tracing the tracer itself
-- 🧵 **Thread-safe** ID generation and SQLite operations
-
----
-
-## 🚀 Upcoming Features
-
-### Enhanced Policy System
-
-**More sophisticated filtering and configuration options.** Coming soon: regex patterns, performance-based filtering, and dynamic policies.
-
-### Distributed System Support
-
-**Trace across multiple services and processes.** Coming soon: trace correlation, request IDs, and cross-service visibility.
-
-### Additional Storage Backends
-
-**More storage options.** Planned: MongoDB, Elasticsearch, and cloud storage integrations.
-
-### Custom Writers
-
-**Build your own storage backends.** Simple interface for integrating with any storage system.
-
-```python
-# Future: Custom storage backends
-from glimpse.writers.base import BaseWriter
-
-class ElasticsearchWriter(BaseWriter):
-    def write(self, entry):
-        # Your custom logic here
-        pass
-```
-
----
-
-## 🤝 Contributing
-
-Found a bug? Have a feature request? Want to contribute code?
-
-- 📝 [Open an issue](https://github.com/PxPatel/glimpse/issues)
-- 🔀 [Submit a pull request](https://github.com/PxPatel/glimpse/pulls)
-- 💬 [Start a discussion](https://github.com/PxPatel/glimpse/discussions)
-
-**Built by developers, for developers.** Your feedback and contributions make Glimpse better for everyone.
-
----
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-**⭐ Like Glimpse? Give us a star and help other developers discover it!**
+- **Tracer** — `sys.settrace` automation, decorators, span managers, propagation helpers.
+- **Span** — Dataclass model; completed spans go to writers that implement `write_span`.
+- **LogWriter** — Multiplexes `write` and `write_span` to configured backends.
